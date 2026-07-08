@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SC Engine Hours Dashboard — Jan–Jun 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js">
+// Utilization stacked bar chart
+const utilVehicles = ['Z10-10','Z10-20','Z10-23','Z10-18','Z10-19','Z10-17'];
+const workingHrs   = [179.12, 197.08, 103.97, 77.82, 67.40, 43.57];
+const idleHrs      = [86.22,  52.82,  76.92, 17.89, 17.16, 19.62];
+
+new Chart(document.getElementById('utilChart'), {
+  type: 'bar',
+  data: {
+    labels: utilVehicles,
+    datasets: [
+      { label: 'Working hrs', data: workingHrs, backgroundColor: 'rgba(26,122,82,0.80)', borderRadius: 3, borderSkipped: false },
+      { label: 'Idle hrs',    data: idleHrs,    backgroundColor: 'rgba(232,160,32,0.80)', borderRadius: 3, borderSkipped: false },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position:'top', labels:{ font:{size:12}, boxWidth:12 } },
+               tooltip: { mode: 'index' } },
+    scales: {
+      x: { stacked: true, ticks:{color:tc,font:{size:12}}, grid:{display:false}, border:{display:false} },
+      y: { stacked: true, ticks:{color:tc,font:{size:11},callback:v=>v+' hrs'}, grid:{color:gc}, border:{display:false} }
+    }
+  }
+});
+
+// Idle % bar chart
+const idlePct = [32.5, 21.1, 42.5, 18.7, 20.3, 31.0];
+const idleColors = idlePct.map(v => v > 35 ? 'rgba(192,57,43,0.80)' : v > 25 ? 'rgba(232,160,32,0.80)' : 'rgba(26,122,82,0.70)');
+new Chart(document.getElementById('idlePctChart'), {
+  type: 'bar',
+  data: {
+    labels: utilVehicles,
+    datasets: [{ label: 'Idle %', data: idlePct, backgroundColor: idleColors, borderRadius: 4, borderSkipped: false }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend:{display:false},
+               tooltip:{ callbacks:{ label: ctx => ctx.parsed.y.toFixed(1)+'% idle' } } },
+    scales: {
+      x: { ticks:{color:tc,font:{size:12}}, grid:{display:false}, border:{display:false} },
+      y: { ticks:{color:tc,font:{size:11},callback:v=>v+'%'}, grid:{color:gc}, border:{display:false},
+           title:{display:true,text:'Idle %',color:tc,font:{size:11}},
+           max: 55 }
+    }
+  }
+});
+
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4f0; color: #1a1a18; padding: 2rem 1rem; }
+  .page { max-width: 900px; margin: 0 auto; }
+  .report-header { margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #e0dfd8; }
+  .report-title { font-size: 26px; font-weight: 600; color: #1a1a18; margin-bottom: 4px; }
+  .report-sub { font-size: 14px; color: #6b6b65; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: .1em; color: #9a9990; text-transform: uppercase; margin: 2.5rem 0 1rem; }
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1rem; }
+  .metric-card { background: #fff; border-radius: 10px; border: 1px solid #e8e7e0; padding: 1rem 1.1rem; }
+  .metric-label { font-size: 12px; color: #6b6b65; margin-bottom: 4px; }
+  .metric-value { font-size: 24px; font-weight: 600; color: #1a1a18; }
+  .metric-note { font-size: 11px; color: #9a9990; margin-top: 2px; }
+  .metric-value.danger  { color: #c0392b; }
+  .metric-value.success { color: #1a7a52; }
+  .metric-value.blue    { color: #2563a8; }
+  .chart-wrap { position: relative; width: 100%; background: #fff; border-radius: 10px; border: 1px solid #e8e7e0; padding: 1.25rem; margin-bottom: 1rem; }
+  .finding-card { background: #fff; border-radius: 10px; border: 1px solid #e8e7e0; padding: 1.1rem 1.25rem; margin-bottom: .75rem; }
+  .finding-header { display: flex; align-items: center; gap: 10px; margin-bottom: .5rem; }
+  .badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 6px; white-space: nowrap; }
+  .badge-red    { background: #fce8e8; color: #a32020; }
+  .badge-amber  { background: #fef3e2; color: #8a5a00; }
+  .badge-green  { background: #e5f4ec; color: #1a6640; }
+  .badge-blue   { background: #e8f0fb; color: #1a4a90; }
+  .finding-title { font-size: 15px; font-weight: 600; color: #1a1a18; }
+  .finding-body { font-size: 13px; color: #5a5a55; line-height: 1.65; }
+  table.rec { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border-radius: 10px; overflow: hidden; border: 1px solid #e8e7e0; margin-bottom: 1rem; }
+  table.rec th { font-size: 11px; font-weight: 600; color: #9a9990; text-align: left; padding: 8px 12px; background: #f8f7f3; border-bottom: 1px solid #e8e7e0; white-space: nowrap; }
+  table.rec th.r { text-align: right; }
+  table.rec td { padding: 8px 12px; border-bottom: 1px solid #f0efe8; color: #1a1a18; white-space: nowrap; }
+  table.rec td.r { text-align: right; }
+  table.rec td.blue { color: #2563a8; font-weight: 500; }
+  table.rec td.muted { color: #9a9990; }
+  table.rec td.high { color: #c0392b; font-weight: 600; }
+  table.rec tr:last-child td { border-bottom: none; }
+  table.rec tr.total-row td { background: #f8f7f3; font-weight: 600; border-top: 1px solid #e8e7e0; }
+  table.rec tr.top td { background: #fefbf0; }
+  .divider { border: none; border-top: 1px solid #e8e7e0; margin: 2.5rem 0; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .legend { display: flex; gap: 16px; margin-bottom: .75rem; font-size: 12px; color: #6b6b65; flex-wrap: wrap; }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .tab-row { display: flex; gap: 6px; margin-bottom: 1rem; }
+  .tab-btn { font-size: 12px; font-weight: 500; padding: 5px 14px; border-radius: 6px; border: 1px solid #e0dfd8; background: #fff; color: #6b6b65; cursor: pointer; }
+  .tab-btn.active { background: #1a1a18; color: #fff; border-color: #1a1a18; }
+  @media (max-width: 520px) { .two-col { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="report-header">
+    <div class="report-title">Engine Hours Dashboard — SC Fleet</div>
+    <div class="report-sub">January 1 – June 30, 2026 &nbsp;·&nbsp; 24 vehicles &nbsp;·&nbsp; 9 Honda UTVs &amp; 15 Ford Pickups &nbsp;·&nbsp; As of Jun 30, 2026</div>
+  </div>
+
+  <!-- FLEET OVERVIEW METRICS -->
+  <div class="section-label">Fleet overview — total period engine hours Jan–Jun 2026</div>
+  <div class="metric-grid">
+    <div class="metric-card"><div class="metric-label">Total fleet vehicles</div><div class="metric-value">24</div><div class="metric-note">9 Honda · 15 Ford</div></div>
+    <div class="metric-card"><div class="metric-label">Total period hours</div><div class="metric-value blue">4,178.6</div><div class="metric-note">all 24 vehicles</div></div>
+    <div class="metric-card"><div class="metric-label">Honda UTV hours</div><div class="metric-value">2,844.6</div><div class="metric-note">68% of fleet total</div></div>
+    <div class="metric-card"><div class="metric-label">Ford truck hours</div><div class="metric-value">1,334.0</div><div class="metric-note">32% of fleet total</div></div>
+    <div class="metric-card"><div class="metric-label">Top vehicle</div><div class="metric-value" style="font-size:18px;">Honda 15-05</div><div class="metric-note">397.1 hrs</div></div>
+    <div class="metric-card"><div class="metric-label">Lowest active</div><div class="metric-value" style="font-size:18px;">Z10-14</div><div class="metric-note">0.2 hrs · last seen May 23</div></div>
+  </div>
+
+  <!-- TABS: ALL / HONDA / FORD -->
+  <div class="section-label">Period engine hours by vehicle</div>
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab('all')">All vehicles</button>
+    <button class="tab-btn" onclick="switchTab('honda')">Honda UTVs</button>
+    <button class="tab-btn" onclick="switchTab('ford')">Ford Pickups</button>
+  </div>
+  <div class="legend">
+    <span><span class="leg-dot" style="background:#2563a8;"></span>Honda UTVs</span>
+    <span><span class="leg-dot" style="background:#e8a020;"></span>Ford Pickups</span>
+  </div>
+  <div class="chart-wrap" style="height:360px;">
+    <canvas id="mainChart" role="img" aria-label="Bar chart of period engine hours by vehicle"></canvas>
+  </div>
+
+  <hr class="divider">
+
+  <!-- FULL TABLE -->
+  <div class="section-label">All vehicles — period hours & last known hours</div>
+  <table class="rec">
+    <thead>
+      <tr>
+        <th>Rank</th><th>Nickname</th><th>Type</th><th>Model</th>
+        <th class="r">Period Hours</th><th class="r">Last Known Hrs</th><th>Last Call In</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="top"><td>1</td><td class="blue">Honda 15-05</td><td>Utility Vehicle</td><td>TRX420</td><td class="r high">397.1</td><td class="r">397</td><td>Jun 30, 2026</td></tr>
+      <tr><td>2</td><td class="blue">Honda 15-02</td><td>Utility Vehicle</td><td>TRX420</td><td class="r">389.0</td><td class="r">389</td><td>Jun 30, 2026</td></tr>
+      <tr><td>3</td><td class="blue">Honda 15-06</td><td>Utility Vehicle</td><td>TRX420</td><td class="r">372.1</td><td class="r">372</td><td>Jun 30, 2026</td></tr>
+      <tr><td>4</td><td class="blue">Honda 15-01</td><td>Utility Vehicle</td><td>TRX420</td><td class="r">330.7</td><td class="r">331</td><td>Jun 30, 2026</td></tr>
+      <tr><td>5</td><td>Z10-23</td><td>Pickup Truck</td><td>F-150</td><td class="r">330.7</td><td class="r">331</td><td>Jun 30, 2026</td></tr>
+      <tr><td>6</td><td class="blue">Honda 15-03</td><td>Utility Vehicle</td><td>TRX420</td><td class="r">324.3</td><td class="r">324</td><td>Jun 30, 2026</td></tr>
+      <tr><td>7</td><td class="blue">Honda 15-04</td><td>Utility Vehicle</td><td>TRX420</td><td class="r">298.2</td><td class="r">298</td><td>Jun 30, 2026</td></tr>
+      <tr><td>8</td><td class="blue">Honda 15-07</td><td>Utility Vehicle</td><td>TRX420</td><td class="r">284.0</td><td class="r">284</td><td>Jun 30, 2026</td></tr>
+      <tr><td>9</td><td class="blue">Honda 15-08</td><td>Utility Vehicle</td><td>TRX420</td><td class="r">283.4</td><td class="r">283</td><td>Jun 30, 2026</td></tr>
+      <tr><td>10</td><td>Z10-10</td><td>Pickup Truck</td><td>F-150</td><td class="r">267.8</td><td class="r">268</td><td>Jun 30, 2026</td></tr>
+      <tr><td>11</td><td>Z10-20</td><td>Pickup Truck</td><td>F-150</td><td class="r">252.1</td><td class="r">252</td><td>Jun 30, 2026</td></tr>
+      <tr><td>12</td><td class="blue">Honda 15-09</td><td>Utility Vehicle</td><td>TRX420</td><td class="r">165.8</td><td class="r">166</td><td>Jun 30, 2026</td></tr>
+      <tr><td>13</td><td>Z10-22</td><td>Pickup Truck</td><td>F-150</td><td class="r">119.3</td><td class="r">119</td><td>Jun 30, 2026</td></tr>
+      <tr><td>14</td><td>Z10-21</td><td>Pickup Truck</td><td>F-150</td><td class="r">103.7</td><td class="r">104</td><td>Jun 30, 2026</td></tr>
+      <tr><td>15</td><td>Z10-18</td><td>Pickup Truck</td><td>F-350</td><td class="r">96.4</td><td class="r">96</td><td>Jun 30, 2026</td></tr>
+      <tr><td>16</td><td>Z10-19</td><td>Pickup Truck</td><td>F-150</td><td class="r">84.8</td><td class="r">85</td><td>Jun 30, 2026</td></tr>
+      <tr><td>17</td><td>Z10-17</td><td>Pickup Truck</td><td>F-150</td><td class="r">63.4</td><td class="r">63</td><td>Jun 30, 2026</td></tr>
+      <tr><td>18</td><td>Z10-04</td><td>Pickup Truck</td><td>F-150</td><td class="r">6.5</td><td class="r">6</td><td>Jun 30, 2026</td></tr>
+      <tr><td>19</td><td>Z10-05</td><td>Pickup Truck</td><td>F-150</td><td class="r">3.6</td><td class="r">4</td><td>Jun 30, 2026</td></tr>
+      <tr><td>20</td><td>Z10-01</td><td>Pickup Truck</td><td>F-150</td><td class="r">1.8</td><td class="r">2</td><td>Jun 30, 2026</td></tr>
+      <tr><td>21</td><td>Z10-06</td><td>Pickup Truck</td><td>F-150</td><td class="r">1.3</td><td class="r">1</td><td>Jun 30, 2026</td></tr>
+      <tr><td>22</td><td>Z10-02</td><td>Pickup Truck</td><td>F-150</td><td class="r">1.3</td><td class="r">1</td><td>Jun 30, 2026</td></tr>
+      <tr><td>23</td><td>Z10-03</td><td>Pickup Truck</td><td>F-150</td><td class="r">1.1</td><td class="r">1</td><td>Jun 30, 2026</td></tr>
+      <tr><td>24</td><td>Z10-14</td><td>Pickup Truck</td><td>F-350</td><td class="r muted">0.2</td><td class="r muted">0</td><td class="muted">May 23, 2026</td></tr>
+      <tr class="total-row"><td colspan="4">Fleet total</td><td class="r">4,178.6</td><td class="r">4,177</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <hr class="divider">
+
+  <!-- HONDA vs FORD BREAKDOWN -->
+  <div class="section-label">Honda UTVs vs Ford Pickups — comparative breakdown</div>
+  <div class="two-col" style="margin-bottom:1rem;">
+    <div class="metric-card"><div class="metric-label">Honda avg hrs/vehicle</div><div class="metric-value blue">316.1</div><div class="metric-note">9 UTVs · TRX420</div></div>
+    <div class="metric-card"><div class="metric-label">Ford avg hrs/vehicle</div><div class="metric-value">88.9</div><div class="metric-note">15 pickups · F-150/F-350</div></div>
+    <div class="metric-card"><div class="metric-label">Honda highest</div><div class="metric-value" style="font-size:18px;">15-05</div><div class="metric-note">397.1 hrs</div></div>
+    <div class="metric-card"><div class="metric-label">Ford highest</div><div class="metric-value" style="font-size:18px;">Z10-23</div><div class="metric-note">330.7 hrs</div></div>
+  </div>
+  <div class="chart-wrap" style="height:260px;">
+    <canvas id="compareChart" role="img" aria-label="Side by side comparison of Honda vs Ford hours"></canvas>
+  </div>
+
+  <hr class="divider">
+
+  <!-- LOW USAGE SECTION -->
+  <div class="section-label">Low usage vehicles — Ford pickups under 10 hours</div>
+  <div class="finding-card">
+    <div class="finding-header"><span class="badge badge-amber">review</span><span class="finding-title">7 Ford pickups logged fewer than 10 engine hours Jan–Jun 2026</span></div>
+    <div class="finding-body">Z10-01, Z10-02, Z10-03, Z10-04, Z10-05, Z10-06, and Z10-14 each show under 10 hours for the entire 6-month period. Z10-14 (F-350) last called in on May 23 with only 0.2 hours recorded and may be inactive or have a tracker issue. These vehicles may be underutilized, reassigned, or their GPS/engine hour trackers may not be functioning correctly.</div>
+  </div>
+
+  <table class="rec">
+    <thead>
+      <tr><th>Vehicle</th><th>Model</th><th class="r">Period Hours</th><th>Last Call In</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="blue">Z10-04</td><td>F-150</td><td class="r">6.5</td><td>Jun 30, 2026</td><td>Active — very low use</td></tr>
+      <tr><td class="blue">Z10-05</td><td>F-150</td><td class="r">3.6</td><td>Jun 30, 2026</td><td>Active — very low use</td></tr>
+      <tr><td class="blue">Z10-01</td><td>F-150</td><td class="r">1.8</td><td>Jun 30, 2026</td><td>Active — very low use</td></tr>
+      <tr><td class="blue">Z10-06</td><td>F-150</td><td class="r">1.3</td><td>Jun 30, 2026</td><td>Active — very low use</td></tr>
+      <tr><td class="blue">Z10-02</td><td>F-150</td><td class="r">1.3</td><td>Jun 30, 2026</td><td>Active — very low use</td></tr>
+      <tr><td class="blue">Z10-03</td><td>F-150</td><td class="r">1.1</td><td>Jun 30, 2026</td><td>Active — very low use</td></tr>
+      <tr><td class="blue">Z10-14</td><td>F-350</td><td class="r muted">0.2</td><td class="muted">May 23, 2026</td><td class="high">⚠ Inactive since May 23</td></tr>
+    </tbody>
+  </table>
+
+  <hr class="divider">
+
+  <!-- FINDINGS -->
+  <div class="section-label">Key findings</div>
+
+  <div class="finding-card">
+    <div class="finding-header"><span class="badge badge-blue">top usage</span><span class="finding-title">Honda UTVs dominate fleet hours — 68% of total activity</span></div>
+    <div class="finding-body">The 9 Honda TRX420 UTVs logged 2,844.6 hours combined (Jan–Jun 2026), averaging 316 hrs each. This is more than 3.5× the Ford pickup average of 89 hrs/vehicle. All 9 Hondas were actively reporting as of Jun 30, 2026 — a strong indicator they are the primary workhorse equipment for field operations.</div>
+  </div>
+
+  <div class="finding-card">
+    <div class="finding-header"><span class="badge badge-blue">notable</span><span class="finding-title">Z10-23 is the highest-use Ford pickup at 330.7 hours</span></div>
+    <div class="finding-body">Z10-23 (F-150) logged 330.7 period hours — tied with Honda 15-01 and significantly above the Ford fleet average of 89 hrs. This vehicle appears to be in heavy rotation and may be a candidate for an earlier service interval check compared to the rest of the Ford fleet.</div>
+  </div>
+
+  <div class="finding-card">
+    <div class="finding-header"><span class="badge badge-amber">review</span><span class="finding-title">Z10-14 (F-350) has been inactive since May 23</span></div>
+    <div class="finding-body">Z10-14 last reported on May 23, 2026 with only 0.2 hours logged for the entire period. It has not reported since. This could indicate the vehicle is out of service, the GPS/telematics unit has a battery or connectivity issue, or it was removed from active fleet rotation. Recommend verifying current status and location.</div>
+  </div>
+
+  <div class="finding-card">
+    <div class="finding-header"><span class="badge badge-amber">review</span><span class="finding-title">6 Ford pickups show near-zero usage (under 5 hours for 6 months)</span></div>
+    <div class="finding-body">Z10-01, Z10-02, Z10-03, Z10-05, Z10-06 each logged 1.1–3.6 hours over the full 6-month period. While these vehicles do report as active (last call-in Jun 30), the extremely low engine hours may suggest they are parked as reserves, drivers are using other vehicles, or the engine hour sensors are not capturing idle/running time correctly.</div>
+  </div>
+
+
+  <hr class="divider">
+
+  <!-- UTILIZATION SECTION -->
+  <div class="section-label">Vehicle utilization — idle vs working hours · Jan–Jun 2026</div>
+  <div style="font-size:12px;color:#9a9990;margin-bottom:.75rem;">Utilization data available for 6 Ford pickups with active telematics. Honda UTVs and remaining Ford pickups do not report fuel/load category breakdowns.</div>
+
+  <div class="metric-grid">
+    <div class="metric-card"><div class="metric-label">Vehicles with util data</div><div class="metric-value">6</div><div class="metric-note">Ford pickups only</div></div>
+    <div class="metric-card"><div class="metric-label">Total tracked hours</div><div class="metric-value blue">939.6</div><div class="metric-note">across 6 vehicles</div></div>
+    <div class="metric-card"><div class="metric-label">Total working hours</div><div class="metric-value success">669.0</div><div class="metric-note">71.2% of tracked time</div></div>
+    <div class="metric-card"><div class="metric-label">Total idle hours</div><div class="metric-value">270.6</div><div class="metric-note">28.8% of tracked time</div></div>
+    <div class="metric-card"><div class="metric-label">Total fuel (util)</div><div class="metric-value">1,267.6</div><div class="metric-note">gal · 6 vehicles</div></div>
+    <div class="metric-card"><div class="metric-label">Highest idle %</div><div class="metric-value danger" style="font-size:18px;">Z10-23</div><div class="metric-note">42.5% idle time</div></div>
+  </div>
+
+  <div class="legend">
+    <span><span class="leg-dot" style="background:#1a7a52;"></span>Working hours</span>
+    <span><span class="leg-dot" style="background:#e8a020;"></span>Idle hours</span>
+  </div>
+  <div class="chart-wrap" style="height:260px;">
+    <canvas id="utilChart" role="img" aria-label="Stacked bar chart of idle vs working hours per vehicle"></canvas>
+  </div>
+
+  <div class="chart-wrap" style="height:220px;">
+    <canvas id="idlePctChart" role="img" aria-label="Bar chart of idle percentage per vehicle"></canvas>
+  </div>
+
+  <table class="rec">
+    <thead>
+      <tr>
+        <th>Vehicle</th><th>Model</th>
+        <th class="r">Idle hrs</th><th class="r">Working hrs</th><th class="r">Total hrs</th>
+        <th class="r">Idle %</th><th class="r">Working %</th>
+        <th class="r">Total fuel (gal)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="blue">Z10-10</td><td>F-150</td><td class="r">86.2</td><td class="r">179.1</td><td class="r">265.3</td><td class="r">32.5%</td><td class="r">67.5%</td><td class="r">264.7</td></tr>
+      <tr><td class="blue">Z10-20</td><td>F-150</td><td class="r">52.8</td><td class="r">197.1</td><td class="r">249.9</td><td class="r">21.1%</td><td class="r success">78.9%</td><td class="r">226.0</td></tr>
+      <tr><td class="blue">Z10-23</td><td>F-150</td><td class="r high">76.9</td><td class="r">104.0</td><td class="r">180.9</td><td class="r high">42.5%</td><td class="r">57.5%</td><td class="r">180.6</td></tr>
+      <tr><td class="blue">Z10-18</td><td>F-350</td><td class="r">17.9</td><td class="r">77.8</td><td class="r">95.7</td><td class="r">18.7%</td><td class="r success">81.3%</td><td class="r">240.3</td></tr>
+      <tr><td class="blue">Z10-19</td><td>F-150</td><td class="r">17.2</td><td class="r">67.4</td><td class="r">84.6</td><td class="r">20.3%</td><td class="r success">79.7%</td><td class="r">213.8</td></tr>
+      <tr><td class="blue">Z10-17</td><td>F-150</td><td class="r">19.6</td><td class="r">43.6</td><td class="r">63.2</td><td class="r">31.0%</td><td class="r">69.0%</td><td class="r">142.2</td></tr>
+      <tr class="total-row"><td colspan="2">Fleet total (6 vehicles)</td><td class="r">270.6</td><td class="r">669.0</td><td class="r">939.6</td><td class="r">28.8%</td><td class="r">71.2%</td><td class="r">1,267.6</td></tr>
+    </tbody>
+  </table>
+
+  <div class="finding-card">
+    <div class="finding-header"><span class="badge badge-amber">review</span><span class="finding-title">Z10-23 has the highest idle rate at 42.5% — 76.9 hours idling</span></div>
+    <div class="finding-body">Z10-23 spent nearly 77 hours idling over the 6-month period, representing 42.5% of its total tracked time. This is notably higher than the fleet average of 28.8%. Despite this, Z10-23 is the highest-hours Ford pickup (330.7 engine hours per the engine hours report). High idle time combined with heavy use may increase fuel costs and accelerate engine wear. Consider reviewing idle reduction practices for this vehicle.</div>
+  </div>
+
+  <div class="finding-card">
+    <div class="finding-header"><span class="badge badge-green">efficient</span><span class="finding-title">Z10-18 (F-350) and Z10-20 are the most efficiently utilized vehicles</span></div>
+    <div class="finding-body">Z10-18 and Z10-20 both show working time above 78% of tracked hours, with idle rates of 18.7% and 21.1% respectively — the lowest in the tracked fleet. Z10-18 is notably fuel-heavy at 240.3 gallons despite only 95.7 hours total, suggesting it is doing heavier-load work (consistent with it being an F-350). Z10-20 shows a strong balance of high utilization and moderate fuel consumption.</div>
+  </div>
+
+  <div class="finding-card">
+    <div class="finding-header"><span class="badge badge-blue">note</span><span class="finding-title">No utilization data for Honda UTVs or 9 Ford pickups</span></div>
+    <div class="finding-body">The utilization report only captures data for Z10-10, Z10-17, Z10-18, Z10-19, Z10-20, and Z10-23. All 9 Honda UTVs and Ford pickups Z10-01 through Z10-06, Z10-14, Z10-21, and Z10-22 returned no fuel or hours breakdown. This may be due to different telematics hardware or tracker configurations on those vehicles.</div>
+  </div>
+
+</div>
+
+<script>
+const tc = 'rgba(0,0,0,0.38)';
+const gc = 'rgba(0,0,0,0.07)';
+
+const ALL_DATA = [
+  {name:'Honda 15-05', hrs:397.1, type:'Honda'},
+  {name:'Honda 15-02', hrs:389.0, type:'Honda'},
+  {name:'Honda 15-06', hrs:372.1, type:'Honda'},
+  {name:'Honda 15-01', hrs:330.7, type:'Honda'},
+  {name:'Z10-23',      hrs:330.7, type:'Ford'},
+  {name:'Honda 15-03', hrs:324.3, type:'Honda'},
+  {name:'Honda 15-04', hrs:298.2, type:'Honda'},
+  {name:'Honda 15-07', hrs:284.0, type:'Honda'},
+  {name:'Honda 15-08', hrs:283.4, type:'Honda'},
+  {name:'Z10-10',      hrs:267.8, type:'Ford'},
+  {name:'Z10-20',      hrs:252.1, type:'Ford'},
+  {name:'Honda 15-09', hrs:165.8, type:'Honda'},
+  {name:'Z10-22',      hrs:119.3, type:'Ford'},
+  {name:'Z10-21',      hrs:103.7, type:'Ford'},
+  {name:'Z10-18',      hrs:96.4,  type:'Ford'},
+  {name:'Z10-19',      hrs:84.8,  type:'Ford'},
+  {name:'Z10-17',      hrs:63.4,  type:'Ford'},
+  {name:'Z10-04',      hrs:6.5,   type:'Ford'},
+  {name:'Z10-05',      hrs:3.6,   type:'Ford'},
+  {name:'Z10-01',      hrs:1.8,   type:'Ford'},
+  {name:'Z10-06',      hrs:1.3,   type:'Ford'},
+  {name:'Z10-02',      hrs:1.3,   type:'Ford'},
+  {name:'Z10-03',      hrs:1.1,   type:'Ford'},
+  {name:'Z10-14',      hrs:0.2,   type:'Ford'},
+];
+
+let mainChart;
+
+function buildMain(filter) {
+  const data = filter === 'all' ? ALL_DATA : ALL_DATA.filter(d => d.type === filter.charAt(0).toUpperCase() + filter.slice(1));
+  const colors = data.map(d => d.type === 'Honda' ? 'rgba(37,99,168,0.80)' : 'rgba(232,160,32,0.85)');
+  if (mainChart) mainChart.destroy();
+  mainChart = new Chart(document.getElementById('mainChart'), {
+    type: 'bar',
+    data: {
+      labels: data.map(d => d.name),
+      datasets: [{ label: 'Period Hours', data: data.map(d => d.hrs), backgroundColor: colors, borderRadius: 4, borderSkipped: false }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' hrs' } } },
+      scales: {
+        x: { ticks: { color: tc, font: { size: 11 }, maxRotation: 35 }, grid: { display: false }, border: { display: false } },
+        y: { ticks: { color: tc, font: { size: 11 }, callback: v => v + ' hrs' }, grid: { color: gc }, border: { display: false },
+             title: { display: true, text: 'Engine Hours', color: tc, font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+function switchTab(filter) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  buildMain(filter);
+}
+
+buildMain('all');
+
+// Honda vs Ford comparison
+const hondaData = ALL_DATA.filter(d=>d.type==='Honda').map(d=>d.hrs);
+const fordData  = ALL_DATA.filter(d=>d.type==='Ford').map(d=>d.hrs);
+const hondaLabels = ALL_DATA.filter(d=>d.type==='Honda').map(d=>d.name.replace('Honda ',''));
+const fordLabels  = ALL_DATA.filter(d=>d.type==='Ford').map(d=>d.name);
+const maxLen = Math.max(hondaData.length, fordData.length);
+while(hondaData.length < maxLen) hondaData.push(null);
+while(fordData.length  < maxLen) fordData.push(null);
+const compareLabels = Array.from({length:maxLen},(_,i)=>i+1);
+
+new Chart(document.getElementById('compareChart'), {
+  type: 'bar',
+  data: {
+    labels: ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th'].slice(0,maxLen),
+    datasets: [
+      { label: 'Honda UTV', data: hondaData, backgroundColor: 'rgba(37,99,168,0.80)', borderRadius: 3, borderSkipped: false },
+      { label: 'Ford Pickup', data: fordData, backgroundColor: 'rgba(232,160,32,0.80)', borderRadius: 3, borderSkipped: false },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } },
+               tooltip: { callbacks: { label: ctx => (ctx.dataset.label==='Honda UTV'?hondaLabels:fordLabels)[ctx.dataIndex] + ': ' + (ctx.parsed.y||0).toFixed(1) + ' hrs' } } },
+    scales: {
+      x: { ticks: { color: tc, font: { size: 11 } }, grid: { display: false }, border: { display: false },
+           title: { display: true, text: 'Rank within fleet type', color: tc, font: { size: 11 } } },
+      y: { ticks: { color: tc, font: { size: 11 }, callback: v => v + ' hrs' }, grid: { color: gc }, border: { display: false } }
+    }
+  }
+});
+
+// Utilization stacked bar chart
+const utilVehicles = ['Z10-10','Z10-20','Z10-23','Z10-18','Z10-19','Z10-17'];
+const workingHrs   = [179.12, 197.08, 103.97, 77.82, 67.40, 43.57];
+const idleHrs      = [86.22,  52.82,  76.92, 17.89, 17.16, 19.62];
+
+new Chart(document.getElementById('utilChart'), {
+  type: 'bar',
+  data: {
+    labels: utilVehicles,
+    datasets: [
+      { label: 'Working hrs', data: workingHrs, backgroundColor: 'rgba(26,122,82,0.80)', borderRadius: 3, borderSkipped: false },
+      { label: 'Idle hrs',    data: idleHrs,    backgroundColor: 'rgba(232,160,32,0.80)', borderRadius: 3, borderSkipped: false },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position:'top', labels:{ font:{size:12}, boxWidth:12 } },
+               tooltip: { mode: 'index' } },
+    scales: {
+      x: { stacked: true, ticks:{color:tc,font:{size:12}}, grid:{display:false}, border:{display:false} },
+      y: { stacked: true, ticks:{color:tc,font:{size:11},callback:v=>v+' hrs'}, grid:{color:gc}, border:{display:false} }
+    }
+  }
+});
+
+// Idle % bar chart
+const idlePct = [32.5, 21.1, 42.5, 18.7, 20.3, 31.0];
+const idleColors = idlePct.map(v => v > 35 ? 'rgba(192,57,43,0.80)' : v > 25 ? 'rgba(232,160,32,0.80)' : 'rgba(26,122,82,0.70)');
+new Chart(document.getElementById('idlePctChart'), {
+  type: 'bar',
+  data: {
+    labels: utilVehicles,
+    datasets: [{ label: 'Idle %', data: idlePct, backgroundColor: idleColors, borderRadius: 4, borderSkipped: false }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend:{display:false},
+               tooltip:{ callbacks:{ label: ctx => ctx.parsed.y.toFixed(1)+'% idle' } } },
+    scales: {
+      x: { ticks:{color:tc,font:{size:12}}, grid:{display:false}, border:{display:false} },
+      y: { ticks:{color:tc,font:{size:11},callback:v=>v+'%'}, grid:{color:gc}, border:{display:false},
+           title:{display:true,text:'Idle %',color:tc,font:{size:11}},
+           max: 55 }
+    }
+  }
+});
+
+</script>
+</body>
+</html>
