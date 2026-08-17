@@ -3,448 +3,469 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SC Engine Hours Dashboard — Jan–Jun 2026</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js">
-// Utilization stacked bar chart
-const utilVehicles = ['Z10-10','Z10-20','Z10-23','Z10-18','Z10-19','Z10-17'];
-const workingHrs   = [179.12, 197.08, 103.97, 77.82, 67.40, 43.57];
-const idleHrs      = [86.22,  52.82,  76.92, 17.89, 17.16, 19.62];
-
-new Chart(document.getElementById('utilChart'), {
-  type: 'bar',
-  data: {
-    labels: utilVehicles,
-    datasets: [
-      { label: 'Working hrs', data: workingHrs, backgroundColor: 'rgba(26,122,82,0.80)', borderRadius: 3, borderSkipped: false },
-      { label: 'Idle hrs',    data: idleHrs,    backgroundColor: 'rgba(232,160,32,0.80)', borderRadius: 3, borderSkipped: false },
-    ]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { position:'top', labels:{ font:{size:12}, boxWidth:12 } },
-               tooltip: { mode: 'index' } },
-    scales: {
-      x: { stacked: true, ticks:{color:tc,font:{size:12}}, grid:{display:false}, border:{display:false} },
-      y: { stacked: true, ticks:{color:tc,font:{size:11},callback:v=>v+' hrs'}, grid:{color:gc}, border:{display:false} }
-    }
-  }
-});
-
-// Idle % bar chart
-const idlePct = [32.5, 21.1, 42.5, 18.7, 20.3, 31.0];
-const idleColors = idlePct.map(v => v > 35 ? 'rgba(192,57,43,0.80)' : v > 25 ? 'rgba(232,160,32,0.80)' : 'rgba(26,122,82,0.70)');
-new Chart(document.getElementById('idlePctChart'), {
-  type: 'bar',
-  data: {
-    labels: utilVehicles,
-    datasets: [{ label: 'Idle %', data: idlePct, backgroundColor: idleColors, borderRadius: 4, borderSkipped: false }]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend:{display:false},
-               tooltip:{ callbacks:{ label: ctx => ctx.parsed.y.toFixed(1)+'% idle' } } },
-    scales: {
-      x: { ticks:{color:tc,font:{size:12}}, grid:{display:false}, border:{display:false} },
-      y: { ticks:{color:tc,font:{size:11},callback:v=>v+'%'}, grid:{color:gc}, border:{display:false},
-           title:{display:true,text:'Idle %',color:tc,font:{size:11}},
-           max: 55 }
-    }
-  }
-});
-
-</script>
+<title>Vista Vineyards — Fuel Report July 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4f0; color: #1a1a18; padding: 2rem 1rem; }
-  .page { max-width: 900px; margin: 0 auto; }
-  .report-header { margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #e0dfd8; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4f0; color: #1a1a18; }
+  .page { max-width: 980px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+  .report-header { margin-bottom: 1.75rem; padding-bottom: 1.5rem; border-bottom: 1px solid #e0dfd8; }
   .report-title { font-size: 26px; font-weight: 600; color: #1a1a18; margin-bottom: 4px; }
   .report-sub { font-size: 14px; color: #6b6b65; }
-  .section-label { font-size: 11px; font-weight: 600; letter-spacing: .1em; color: #9a9990; text-transform: uppercase; margin: 2.5rem 0 1rem; }
+
+  nav.tabs { display: flex; gap: 2px; border-bottom: 2px solid #e0dfd8; margin-bottom: 1.75rem; flex-wrap: wrap; position: sticky; top: 0; background: #f5f4f0; padding-top: 4px; z-index: 10; }
+  nav.tabs button { background: none; border: none; padding: 10px 14px; font-size: 13px; font-weight: 600; color: #9a9990; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; font-family: inherit; transition: color .15s; }
+  nav.tabs button:hover { color: #1a1a18; }
+  nav.tabs button.active { color: #1a1a18; border-bottom-color: #c0392b; }
+
+  .panel { display: none; }
+  .panel.active { display: block; animation: fade .2s ease; }
+  @keyframes fade { from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: .1em; color: #9a9990; text-transform: uppercase; margin: 2rem 0 1rem; }
+  .section-label:first-child { margin-top: 0; }
+  .section-desc { font-size: 13px; color: #6b6b65; line-height: 1.6; margin: -.5rem 0 1rem; max-width: 700px; }
+
   .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1rem; }
   .metric-card { background: #fff; border-radius: 10px; border: 1px solid #e8e7e0; padding: 1rem 1.1rem; }
   .metric-label { font-size: 12px; color: #6b6b65; margin-bottom: 4px; }
   .metric-value { font-size: 24px; font-weight: 600; color: #1a1a18; }
   .metric-note { font-size: 11px; color: #9a9990; margin-top: 2px; }
-  .metric-value.danger  { color: #c0392b; }
+  .metric-value.danger { color: #c0392b; }
   .metric-value.success { color: #1a7a52; }
-  .metric-value.blue    { color: #2563a8; }
+
   .chart-wrap { position: relative; width: 100%; background: #fff; border-radius: 10px; border: 1px solid #e8e7e0; padding: 1.25rem; margin-bottom: 1rem; }
+
   .finding-card { background: #fff; border-radius: 10px; border: 1px solid #e8e7e0; padding: 1.1rem 1.25rem; margin-bottom: .75rem; }
   .finding-header { display: flex; align-items: center; gap: 10px; margin-bottom: .5rem; }
   .badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 6px; white-space: nowrap; }
-  .badge-red    { background: #fce8e8; color: #a32020; }
-  .badge-amber  { background: #fef3e2; color: #8a5a00; }
-  .badge-green  { background: #e5f4ec; color: #1a6640; }
-  .badge-blue   { background: #e8f0fb; color: #1a4a90; }
+  .badge-red { background: #fce8e8; color: #a32020; }
+  .badge-amber { background: #fef3e2; color: #8a5a00; }
+  .badge-green { background: #e5f4ec; color: #1a6640; }
   .finding-title { font-size: 15px; font-weight: 600; color: #1a1a18; }
   .finding-body { font-size: 13px; color: #5a5a55; line-height: 1.65; }
-  table.rec { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border-radius: 10px; overflow: hidden; border: 1px solid #e8e7e0; margin-bottom: 1rem; }
-  table.rec th { font-size: 11px; font-weight: 600; color: #9a9990; text-align: left; padding: 8px 12px; background: #f8f7f3; border-bottom: 1px solid #e8e7e0; white-space: nowrap; }
-  table.rec th.r { text-align: right; }
-  table.rec td { padding: 8px 12px; border-bottom: 1px solid #f0efe8; color: #1a1a18; white-space: nowrap; }
-  table.rec td.r { text-align: right; }
-  table.rec td.blue { color: #2563a8; font-weight: 500; }
-  table.rec td.muted { color: #9a9990; }
-  table.rec td.high { color: #c0392b; font-weight: 600; }
-  table.rec tr:last-child td { border-bottom: none; }
-  table.rec tr.total-row td { background: #f8f7f3; font-weight: 600; border-top: 1px solid #e8e7e0; }
-  table.rec tr.top td { background: #fefbf0; }
-  .divider { border: none; border-top: 1px solid #e8e7e0; margin: 2.5rem 0; }
+
+  table.rec { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border-radius: 10px; overflow: hidden; border: 1px solid #e8e7e0; }
+  table.rec th { font-size: 11px; font-weight: 600; color: #9a9990; text-align: left; padding: 8px 12px; background: #f8f7f3; border-bottom: 1px solid #e8e7e0; cursor: pointer; user-select: none; white-space: nowrap; }
+  table.rec th.sorted::after { content: " \25be"; color: #c0392b; }
+  table.rec th.sorted.asc::after { content: " \25b4"; color: #c0392b; }
+  table.rec td { padding: 8px 12px; border-bottom: 1px solid #f0efe8; color: #1a1a18; }
+  table.rec tbody tr:hover { background: #fafaf6; }
+  table.rec tr.total-row td { border-bottom: none; font-weight: 600; background: #f8f7f3; }
+  table.rec .flag-row td { background: #fef2f2; }
+  table.rec td.num, table.rec th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .tag { display:inline-block; font-size:10.5px; font-weight:700; text-transform:uppercase; padding:2px 7px; border-radius:20px; letter-spacing:.03em; }
+  .tag.ok{ background:#e5f4ec; color:#1a6640; }
+  .tag.warn{ background:#fef3e2; color:#8a5a00; }
+  .tag.bad{ background:#fce8e8; color:#a32020; }
+  .tag.neutral{ background:#eceae0; color:#6b6b65; }
+  .flag-low { color: #c0392b; font-weight: 700; }
+
+  .divider { border: none; border-top: 1px solid #e8e7e0; margin: 2rem 0; }
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .legend { display: flex; gap: 16px; margin-bottom: .75rem; font-size: 12px; color: #6b6b65; flex-wrap: wrap; }
   .legend span { display: flex; align-items: center; gap: 5px; }
   .leg-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-  .tab-row { display: flex; gap: 6px; margin-bottom: 1rem; }
-  .tab-btn { font-size: 12px; font-weight: 500; padding: 5px 14px; border-radius: 6px; border: 1px solid #e0dfd8; background: #fff; color: #6b6b65; cursor: pointer; }
-  .tab-btn.active { background: #1a1a18; color: #fff; border-color: #1a1a18; }
-  @media (max-width: 520px) { .two-col { grid-template-columns: 1fr; } }
+  .summary-note { font-size: 13px; color: #5a5a55; line-height: 1.65; margin-top: .5rem; }
+  .caveat { font-size: 12px; color: #6b6b65; margin: -4px 0 14px; padding: 8px 12px; background: #f1efe4; border-radius: 6px; line-height: 1.55; }
+
+  .rank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1.25rem; }
+  .rank-card { background: #fff; border: 1px solid #e8e7e0; border-radius: 10px; padding: 14px 16px; }
+  .rank-card h3 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: #1a1a18; display:flex; align-items:center; gap:6px; }
+  .rank-card.good h3::before { content: "\25b2"; color: #1a7a52; font-size: 10px; }
+  .rank-card.bad h3::before { content: "\25bc"; color: #c0392b; font-size: 10px; }
+  .rank-list { list-style: none; }
+  .rank-list li { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-top: 1px solid #f0efe8; font-size: 13px; }
+  .rank-list li:first-child { border-top: none; }
+  .rank-list .rname { font-weight: 600; color: #1a1a18; }
+  .rank-list .rsub { font-size: 11px; color: #9a9990; font-weight: 400; }
+  .rank-list .rval { font-variant-numeric: tabular-nums; font-weight: 700; }
+  .rank-list .rval.good { color: #1a7a52; }
+  .rank-list .rval.bad { color: #c0392b; }
+  .rank-num { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%; background: #eceae0; color: #6b6b65; font-size: 10px; font-weight: 700; margin-right: 7px; }
+
+  footer.foot { text-align: center; padding: 2rem 0 0; font-size: 11.5px; color: #9a9990; }
+
+  @media (max-width: 700px) { .rank-grid, .two-col { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 <div class="page">
 
-  <!-- HEADER -->
   <div class="report-header">
-    <div class="report-title">Engine Hours Dashboard — SC Fleet</div>
-    <div class="report-sub">January 1 – June 30, 2026 &nbsp;·&nbsp; 24 vehicles &nbsp;·&nbsp; 9 Honda UTVs &amp; 15 Ford Pickups &nbsp;·&nbsp; As of Jun 30, 2026</div>
+    <div class="report-title">Fuel Usage Report — Vista Vineyards</div>
+    <div class="report-sub">July 2026 &nbsp;·&nbsp; SC Fleet Card, B.Smart Digital Dispensing &amp; Foreman Paper Logs &nbsp;·&nbsp; Generated August 17, 2026</div>
   </div>
 
-  <!-- FLEET OVERVIEW METRICS -->
-  <div class="section-label">Fleet overview — total period engine hours Jan–Jun 2026</div>
-  <div class="metric-grid">
-    <div class="metric-card"><div class="metric-label">Total fleet vehicles</div><div class="metric-value">24</div><div class="metric-note">9 Honda · 15 Ford</div></div>
-    <div class="metric-card"><div class="metric-label">Total period hours</div><div class="metric-value blue">4,178.6</div><div class="metric-note">all 24 vehicles</div></div>
-    <div class="metric-card"><div class="metric-label">Honda UTV hours</div><div class="metric-value">2,844.6</div><div class="metric-note">68% of fleet total</div></div>
-    <div class="metric-card"><div class="metric-label">Ford truck hours</div><div class="metric-value">1,334.0</div><div class="metric-note">32% of fleet total</div></div>
-    <div class="metric-card"><div class="metric-label">Top vehicle</div><div class="metric-value" style="font-size:18px;">Honda 15-05</div><div class="metric-note">397.1 hrs</div></div>
-    <div class="metric-card"><div class="metric-label">Lowest active</div><div class="metric-value" style="font-size:18px;">Z10-14</div><div class="metric-note">0.2 hrs · last seen May 23</div></div>
-  </div>
+  <nav class="tabs" id="tabs">
+    <button data-tab="sc" class="active">SC Fleet</button>
+    <button data-tab="digital">Vista Digital</button>
+    <button data-tab="paper">Vista Paper Logs</button>
+    <button data-tab="recon">Reconciliation</button>
+    <button data-tab="hours">Engine Hours</button>
+    <button data-tab="findings">Findings</button>
+  </nav>
 
-  <!-- TABS: ALL / HONDA / FORD -->
-  <div class="section-label">Period engine hours by vehicle</div>
-  <div class="tab-row">
-    <button class="tab-btn active" onclick="switchTab('all')">All vehicles</button>
-    <button class="tab-btn" onclick="switchTab('honda')">Honda UTVs</button>
-    <button class="tab-btn" onclick="switchTab('ford')">Ford Pickups</button>
-  </div>
-  <div class="legend">
-    <span><span class="leg-dot" style="background:#2563a8;"></span>Honda UTVs</span>
-    <span><span class="leg-dot" style="background:#e8a020;"></span>Ford Pickups</span>
-  </div>
-  <div class="chart-wrap" style="height:360px;">
-    <canvas id="mainChart" role="img" aria-label="Bar chart of period engine hours by vehicle"></canvas>
-  </div>
+  <!-- ============ SC FLEET ============ -->
+  <section class="panel active" id="panel-sc">
+    <div class="section-label">SC Fleet Fuel Card — by driver</div>
+    <div class="section-desc">On-road vehicles fueled via SC fuel card. MPG is the average of per-fill readings for July; EQ# matched against Equipment Inventory (owned Z10-series) and Rental Equipment Summary (active rentals as of 7/31/26).</div>
 
-  <hr class="divider">
+    <div class="rank-grid" id="rankSCGal"></div>
+    <div class="caveat">YTD MPG draws on all fills on file since Feb 19, 2026 — a sturdier number than July alone. Samuel Duarte's July MPG (7.96) looks much lower than his YTD average (25.39); worth a glance at whether his July fills were logged against the right vehicle.</div>
 
-  <!-- FULL TABLE -->
-  <div class="section-label">All vehicles — period hours & last known hours</div>
-  <table class="rec">
-    <thead>
-      <tr>
-        <th>Rank</th><th>Nickname</th><th>Type</th><th>Model</th>
-        <th class="r">Period Hours</th><th class="r">Last Known Hrs</th><th>Last Call In</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr class="top"><td>1</td><td class="blue">Honda 15-05</td><td>Utility Vehicle</td><td>TRX420</td><td class="r high">397.1</td><td class="r">397</td><td>Jun 30, 2026</td></tr>
-      <tr><td>2</td><td class="blue">Honda 15-02</td><td>Utility Vehicle</td><td>TRX420</td><td class="r">389.0</td><td class="r">389</td><td>Jun 30, 2026</td></tr>
-      <tr><td>3</td><td class="blue">Honda 15-06</td><td>Utility Vehicle</td><td>TRX420</td><td class="r">372.1</td><td class="r">372</td><td>Jun 30, 2026</td></tr>
-      <tr><td>4</td><td class="blue">Honda 15-01</td><td>Utility Vehicle</td><td>TRX420</td><td class="r">330.7</td><td class="r">331</td><td>Jun 30, 2026</td></tr>
-      <tr><td>5</td><td>Z10-23</td><td>Pickup Truck</td><td>F-150</td><td class="r">330.7</td><td class="r">331</td><td>Jun 30, 2026</td></tr>
-      <tr><td>6</td><td class="blue">Honda 15-03</td><td>Utility Vehicle</td><td>TRX420</td><td class="r">324.3</td><td class="r">324</td><td>Jun 30, 2026</td></tr>
-      <tr><td>7</td><td class="blue">Honda 15-04</td><td>Utility Vehicle</td><td>TRX420</td><td class="r">298.2</td><td class="r">298</td><td>Jun 30, 2026</td></tr>
-      <tr><td>8</td><td class="blue">Honda 15-07</td><td>Utility Vehicle</td><td>TRX420</td><td class="r">284.0</td><td class="r">284</td><td>Jun 30, 2026</td></tr>
-      <tr><td>9</td><td class="blue">Honda 15-08</td><td>Utility Vehicle</td><td>TRX420</td><td class="r">283.4</td><td class="r">283</td><td>Jun 30, 2026</td></tr>
-      <tr><td>10</td><td>Z10-10</td><td>Pickup Truck</td><td>F-150</td><td class="r">267.8</td><td class="r">268</td><td>Jun 30, 2026</td></tr>
-      <tr><td>11</td><td>Z10-20</td><td>Pickup Truck</td><td>F-150</td><td class="r">252.1</td><td class="r">252</td><td>Jun 30, 2026</td></tr>
-      <tr><td>12</td><td class="blue">Honda 15-09</td><td>Utility Vehicle</td><td>TRX420</td><td class="r">165.8</td><td class="r">166</td><td>Jun 30, 2026</td></tr>
-      <tr><td>13</td><td>Z10-22</td><td>Pickup Truck</td><td>F-150</td><td class="r">119.3</td><td class="r">119</td><td>Jun 30, 2026</td></tr>
-      <tr><td>14</td><td>Z10-21</td><td>Pickup Truck</td><td>F-150</td><td class="r">103.7</td><td class="r">104</td><td>Jun 30, 2026</td></tr>
-      <tr><td>15</td><td>Z10-18</td><td>Pickup Truck</td><td>F-350</td><td class="r">96.4</td><td class="r">96</td><td>Jun 30, 2026</td></tr>
-      <tr><td>16</td><td>Z10-19</td><td>Pickup Truck</td><td>F-150</td><td class="r">84.8</td><td class="r">85</td><td>Jun 30, 2026</td></tr>
-      <tr><td>17</td><td>Z10-17</td><td>Pickup Truck</td><td>F-150</td><td class="r">63.4</td><td class="r">63</td><td>Jun 30, 2026</td></tr>
-      <tr><td>18</td><td>Z10-04</td><td>Pickup Truck</td><td>F-150</td><td class="r">6.5</td><td class="r">6</td><td>Jun 30, 2026</td></tr>
-      <tr><td>19</td><td>Z10-05</td><td>Pickup Truck</td><td>F-150</td><td class="r">3.6</td><td class="r">4</td><td>Jun 30, 2026</td></tr>
-      <tr><td>20</td><td>Z10-01</td><td>Pickup Truck</td><td>F-150</td><td class="r">1.8</td><td class="r">2</td><td>Jun 30, 2026</td></tr>
-      <tr><td>21</td><td>Z10-06</td><td>Pickup Truck</td><td>F-150</td><td class="r">1.3</td><td class="r">1</td><td>Jun 30, 2026</td></tr>
-      <tr><td>22</td><td>Z10-02</td><td>Pickup Truck</td><td>F-150</td><td class="r">1.3</td><td class="r">1</td><td>Jun 30, 2026</td></tr>
-      <tr><td>23</td><td>Z10-03</td><td>Pickup Truck</td><td>F-150</td><td class="r">1.1</td><td class="r">1</td><td>Jun 30, 2026</td></tr>
-      <tr><td>24</td><td>Z10-14</td><td>Pickup Truck</td><td>F-350</td><td class="r muted">0.2</td><td class="r muted">0</td><td class="muted">May 23, 2026</td></tr>
-      <tr class="total-row"><td colspan="4">Fleet total</td><td class="r">4,178.6</td><td class="r">4,177</td><td></td></tr>
-    </tbody>
-  </table>
+    <table class="rec" id="tbl-sc">
+      <thead><tr>
+        <th data-key="Driver">Driver</th>
+        <th data-key="vehicle" class="num">Card #</th>
+        <th data-key="eq">EQ #</th>
+        <th data-key="asset_type">Asset Type</th>
+        <th data-key="gal" class="num">Jul Gallons</th>
+        <th data-key="cost" class="num">Jul Cost</th>
+        <th data-key="ytd_mpg" class="num">YTD MPG</th>
+        <th data-key="avg_mpg" class="num">Jul MPG</th>
+        <th data-key="fills" class="num">Jul Fills</th>
+      </tr></thead>
+      <tbody id="body-sc"></tbody>
+    </table>
+    <div class="summary-note" style="margin-top:.5rem;">YTD MPG is the average across all SC fuel card transactions on file (Feb 19 – Jul 31, 2026); Jul MPG is July only. Table is sorted by YTD MPG first, then July MPG as a tiebreaker — click any column header to re-sort.</div>
+    <div class="summary-note">33 of 35 drivers matched to an EQ#. Juan Garcia and Alicia Rios show their last known vehicle (rental ended earlier in the year, tagged "Rental ended" — no active replacement on record, so treat as unconfirmed for July). Fernando Perez and Erik G Garcia remain unmatched — no name match in either inventory file. Hover a row for match detail.</div>
+  </section>
 
-  <hr class="divider">
+  <!-- ============ VISTA DIGITAL ============ -->
+  <section class="panel" id="panel-digital">
+    <div class="section-label">Vista Field Equipment — B.Smart digital dispenses</div>
+    <div class="section-desc">Fuel dispensed through the B.Smart pump/kiosk at Vista Vineyards, July 2026. Includes bulk diesel tank refills (Z11-01/Z11-02) and foreman gas-can draws, later hand-distributed to tractors recorded on paper logs.</div>
+    <div class="caveat">B.Smart dispenses carry no hours/mileage reading, so a true efficiency figure is not available here — ranked by total volume instead.</div>
 
-  <!-- HONDA vs FORD BREAKDOWN -->
-  <div class="section-label">Honda UTVs vs Ford Pickups — comparative breakdown</div>
-  <div class="two-col" style="margin-bottom:1rem;">
-    <div class="metric-card"><div class="metric-label">Honda avg hrs/vehicle</div><div class="metric-value blue">316.1</div><div class="metric-note">9 UTVs · TRX420</div></div>
-    <div class="metric-card"><div class="metric-label">Ford avg hrs/vehicle</div><div class="metric-value">88.9</div><div class="metric-note">15 pickups · F-150/F-350</div></div>
-    <div class="metric-card"><div class="metric-label">Honda highest</div><div class="metric-value" style="font-size:18px;">15-05</div><div class="metric-note">397.1 hrs</div></div>
-    <div class="metric-card"><div class="metric-label">Ford highest</div><div class="metric-value" style="font-size:18px;">Z10-23</div><div class="metric-note">330.7 hrs</div></div>
-  </div>
-  <div class="chart-wrap" style="height:260px;">
-    <canvas id="compareChart" role="img" aria-label="Side by side comparison of Honda vs Ford hours"></canvas>
-  </div>
+    <div class="rank-grid" id="rankDigital"></div>
 
-  <hr class="divider">
+    <table class="rec" id="tbl-digital">
+      <thead><tr>
+        <th data-key="reg_clean">Equipment / Account</th>
+        <th data-key="category">Category</th>
+        <th data-key="primary_driver">Primary Driver</th>
+        <th data-key="gal" class="num">Gallons</th>
+        <th data-key="fills" class="num">Fills</th>
+      </tr></thead>
+      <tbody id="body-digital"></tbody>
+    </table>
+  </section>
 
-  <!-- LOW USAGE SECTION -->
-  <div class="section-label">Low usage vehicles — Ford pickups under 10 hours</div>
-  <div class="finding-card">
-    <div class="finding-header"><span class="badge badge-amber">review</span><span class="finding-title">7 Ford pickups logged fewer than 10 engine hours Jan–Jun 2026</span></div>
-    <div class="finding-body">Z10-01, Z10-02, Z10-03, Z10-04, Z10-05, Z10-06, and Z10-14 each show under 10 hours for the entire 6-month period. Z10-14 (F-350) last called in on May 23 with only 0.2 hours recorded and may be inactive or have a tracker issue. These vehicles may be underutilized, reassigned, or their GPS/engine hour trackers may not be functioning correctly.</div>
-  </div>
+  <!-- ============ VISTA PAPER LOGS ============ -->
+  <section class="panel" id="panel-paper">
+    <div class="section-label">Tractor &amp; sprayer fleet — July engine hours logged</div>
+    <div class="section-desc">From handwritten fuel logs, cross-matched against Equipment Inventory and Rental Equipment Summary. Hours are the span between each unit's first and last hour-meter reading in July — directional, not a full-month reading.</div>
 
-  <table class="rec">
-    <thead>
-      <tr><th>Vehicle</th><th>Model</th><th class="r">Period Hours</th><th>Last Call In</th><th>Status</th></tr>
-    </thead>
-    <tbody>
-      <tr><td class="blue">Z10-04</td><td>F-150</td><td class="r">6.5</td><td>Jun 30, 2026</td><td>Active — very low use</td></tr>
-      <tr><td class="blue">Z10-05</td><td>F-150</td><td class="r">3.6</td><td>Jun 30, 2026</td><td>Active — very low use</td></tr>
-      <tr><td class="blue">Z10-01</td><td>F-150</td><td class="r">1.8</td><td>Jun 30, 2026</td><td>Active — very low use</td></tr>
-      <tr><td class="blue">Z10-06</td><td>F-150</td><td class="r">1.3</td><td>Jun 30, 2026</td><td>Active — very low use</td></tr>
-      <tr><td class="blue">Z10-02</td><td>F-150</td><td class="r">1.3</td><td>Jun 30, 2026</td><td>Active — very low use</td></tr>
-      <tr><td class="blue">Z10-03</td><td>F-150</td><td class="r">1.1</td><td>Jun 30, 2026</td><td>Active — very low use</td></tr>
-      <tr><td class="blue">Z10-14</td><td>F-350</td><td class="r muted">0.2</td><td class="muted">May 23, 2026</td><td class="high">⚠ Inactive since May 23</td></tr>
-    </tbody>
-  </table>
+    <div class="legend">
+      <span><span class="leg-dot" style="background:#2563a8;"></span>Hours logged (left axis)</span>
+      <span><span class="leg-dot" style="background:#e8a020;"></span>Gallons dispensed (right axis)</span>
+    </div>
+    <div class="chart-wrap" style="height:300px;">
+      <canvas id="fleetChart" role="img" aria-label="Grouped bar chart of July hours logged and gallons dispensed for 10 tractor and sprayer units."></canvas>
+    </div>
 
-  <hr class="divider">
+    <div class="metric-grid">
+      <div class="metric-card"><div class="metric-label">Fleet total hours logged</div><div class="metric-value">1,052.1 <span style="font-size:14px;font-weight:400;color:#6b6b65;">hrs</span></div></div>
+      <div class="metric-card"><div class="metric-label">Fleet total fuel used</div><div class="metric-value">1,369.2 <span style="font-size:14px;font-weight:400;color:#6b6b65;">gal</span></div></div>
+      <div class="metric-card"><div class="metric-label">Fleet average rate</div><div class="metric-value">1.30 <span style="font-size:14px;font-weight:400;color:#6b6b65;">gal/hr</span></div></div>
+    </div>
 
-  <!-- FINDINGS -->
-  <div class="section-label">Key findings</div>
+    <div class="section-label">Fuel efficiency — gal/hr by unit</div>
+    <div class="chart-wrap" style="height:220px;">
+      <canvas id="efficiencyChart" role="img" aria-label="Bar chart of gal/hr consumption rate across 10 tractor and sprayer units."></canvas>
+    </div>
 
-  <div class="finding-card">
-    <div class="finding-header"><span class="badge badge-blue">top usage</span><span class="finding-title">Honda UTVs dominate fleet hours — 68% of total activity</span></div>
-    <div class="finding-body">The 9 Honda TRX420 UTVs logged 2,844.6 hours combined (Jan–Jun 2026), averaging 316 hrs each. This is more than 3.5× the Ford pickup average of 89 hrs/vehicle. All 9 Hondas were actively reporting as of Jun 30, 2026 — a strong indicator they are the primary workhorse equipment for field operations.</div>
-  </div>
+    <div class="rank-grid" id="rankPaper"></div>
 
-  <div class="finding-card">
-    <div class="finding-header"><span class="badge badge-blue">notable</span><span class="finding-title">Z10-23 is the highest-use Ford pickup at 330.7 hours</span></div>
-    <div class="finding-body">Z10-23 (F-150) logged 330.7 period hours — tied with Honda 15-01 and significantly above the Ford fleet average of 89 hrs. This vehicle appears to be in heavy rotation and may be a candidate for an earlier service interval check compared to the rest of the Ford fleet.</div>
-  </div>
+    <div class="section-label">All equipment — paper fuel logs</div>
+    <table class="rec" id="tbl-paper">
+      <thead><tr>
+        <th data-key="eq">EQ # (as written)</th>
+        <th data-key="matched_asset">Matched Asset</th>
+        <th data-key="foreman">Foreman</th>
+        <th data-key="operators">Operator(s)</th>
+        <th data-key="gal" class="num">Gallons</th>
+        <th data-key="fills" class="num">Fills</th>
+      </tr></thead>
+      <tbody id="body-paper"></tbody>
+    </table>
+    <div class="summary-note">EQ 6092, 5057, 9982, 9262, 9981 are confirmed forklifts (not tractors) via rental match. "2003/2005/2006" are likely shorthand for owned Z20-03/05/06. See Findings tab for flagged mismatches.</div>
+  </section>
 
-  <div class="finding-card">
-    <div class="finding-header"><span class="badge badge-amber">review</span><span class="finding-title">Z10-14 (F-350) has been inactive since May 23</span></div>
-    <div class="finding-body">Z10-14 last reported on May 23, 2026 with only 0.2 hours logged for the entire period. It has not reported since. This could indicate the vehicle is out of service, the GPS/telematics unit has a battery or connectivity issue, or it was removed from active fleet rotation. Recommend verifying current status and location.</div>
-  </div>
+  <!-- ============ RECONCILIATION ============ -->
+  <section class="panel" id="panel-recon">
+    <div class="section-label">Foreman fuel reconciliation — B.Smart pump vs. paper logs</div>
+    <div class="section-desc">Compares what each foreman drew from the B.Smart pump (gas can + bulk tank + unassigned draws under their name) against what they logged dispensing to individual equipment on paper.</div>
 
-  <div class="finding-card">
-    <div class="finding-header"><span class="badge badge-amber">review</span><span class="finding-title">6 Ford pickups show near-zero usage (under 5 hours for 6 months)</span></div>
-    <div class="finding-body">Z10-01, Z10-02, Z10-03, Z10-05, Z10-06 each logged 1.1–3.6 hours over the full 6-month period. While these vehicles do report as active (last call-in Jun 30), the extremely low engine hours may suggest they are parked as reserves, drivers are using other vehicles, or the engine hour sensors are not capturing idle/running time correctly.</div>
-  </div>
+    <div class="two-col" style="margin-bottom:1.25rem;">
+      <div class="chart-wrap" id="reconChart" style="height:auto;"></div>
+      <table class="rec" id="tbl-recon">
+        <thead><tr>
+          <th data-key="foreman">Foreman</th>
+          <th data-key="digital" class="num">B.Smart</th>
+          <th data-key="paper" class="num">Paper</th>
+          <th data-key="pct" class="num">Status</th>
+        </tr></thead>
+        <tbody id="body-recon"></tbody>
+      </table>
+    </div>
+    <div class="summary-note">
+      <strong>Reads well:</strong> Fredy (-2.1%) and Samuel (+4.4%) — paper and digital line up closely.<br>
+      <strong>Worth a look:</strong> Ignacio (+19.8%), Javier (+44.2%), and Arturo (+61.0%) show more fuel drawn digitally than logged on paper — see Findings tab.
+    </div>
+  </section>
 
+  <!-- ============ ENGINE HOURS ============ -->
+  <section class="panel" id="panel-hours">
+    <div class="section-label">Engine hours reference — John Deere Portal</div>
+    <div class="section-desc">Last known engine hours as of 7/31/26. These are lifetime/telematics readings, not July-only — a clean July gal/hour figure isn't available from this export alone (no start-of-month baseline).</div>
 
-  <hr class="divider">
+    <table class="rec" id="tbl-hours">
+      <thead><tr>
+        <th data-key="eq">EQ / Nickname</th>
+        <th data-key="make">Make</th>
+        <th data-key="model">Model</th>
+        <th data-key="hours" class="num">Last Known Hours</th>
+      </tr></thead>
+      <tbody id="body-hours"></tbody>
+    </table>
+  </section>
 
-  <!-- UTILIZATION SECTION -->
-  <div class="section-label">Vehicle utilization — idle vs working hours · Jan–Jun 2026</div>
-  <div style="font-size:12px;color:#9a9990;margin-bottom:.75rem;">Utilization data available for 6 Ford pickups with active telematics. Honda UTVs and remaining Ford pickups do not report fuel/load category breakdowns.</div>
+  <!-- ============ FINDINGS ============ -->
+  <section class="panel" id="panel-findings">
+    <div class="section-label">Findings summary</div>
+    <div class="section-desc">Everything flagged across all sources this month, ranked roughly by how urgent it is to look into.</div>
+    <div id="findingsList"></div>
+  </section>
 
-  <div class="metric-grid">
-    <div class="metric-card"><div class="metric-label">Vehicles with util data</div><div class="metric-value">6</div><div class="metric-note">Ford pickups only</div></div>
-    <div class="metric-card"><div class="metric-label">Total tracked hours</div><div class="metric-value blue">939.6</div><div class="metric-note">across 6 vehicles</div></div>
-    <div class="metric-card"><div class="metric-label">Total working hours</div><div class="metric-value success">669.0</div><div class="metric-note">71.2% of tracked time</div></div>
-    <div class="metric-card"><div class="metric-label">Total idle hours</div><div class="metric-value">270.6</div><div class="metric-note">28.8% of tracked time</div></div>
-    <div class="metric-card"><div class="metric-label">Total fuel (util)</div><div class="metric-value">1,267.6</div><div class="metric-note">gal · 6 vehicles</div></div>
-    <div class="metric-card"><div class="metric-label">Highest idle %</div><div class="metric-value danger" style="font-size:18px;">Z10-23</div><div class="metric-note">42.5% idle time</div></div>
-  </div>
+  <footer class="foot">Vista Vineyards — Fuel Usage Report — generated from SC Fuel Portal, John Deere Portal, B.Smart, Equipment Inventory &amp; Rental Equipment Summary (as of 7/31/26), plus handwritten field logs (scanned 8/11/26).</footer>
 
-  <div class="legend">
-    <span><span class="leg-dot" style="background:#1a7a52;"></span>Working hours</span>
-    <span><span class="leg-dot" style="background:#e8a020;"></span>Idle hours</span>
-  </div>
-  <div class="chart-wrap" style="height:260px;">
-    <canvas id="utilChart" role="img" aria-label="Stacked bar chart of idle vs working hours per vehicle"></canvas>
-  </div>
-
-  <div class="chart-wrap" style="height:220px;">
-    <canvas id="idlePctChart" role="img" aria-label="Bar chart of idle percentage per vehicle"></canvas>
-  </div>
-
-  <table class="rec">
-    <thead>
-      <tr>
-        <th>Vehicle</th><th>Model</th>
-        <th class="r">Idle hrs</th><th class="r">Working hrs</th><th class="r">Total hrs</th>
-        <th class="r">Idle %</th><th class="r">Working %</th>
-        <th class="r">Total fuel (gal)</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td class="blue">Z10-10</td><td>F-150</td><td class="r">86.2</td><td class="r">179.1</td><td class="r">265.3</td><td class="r">32.5%</td><td class="r">67.5%</td><td class="r">264.7</td></tr>
-      <tr><td class="blue">Z10-20</td><td>F-150</td><td class="r">52.8</td><td class="r">197.1</td><td class="r">249.9</td><td class="r">21.1%</td><td class="r success">78.9%</td><td class="r">226.0</td></tr>
-      <tr><td class="blue">Z10-23</td><td>F-150</td><td class="r high">76.9</td><td class="r">104.0</td><td class="r">180.9</td><td class="r high">42.5%</td><td class="r">57.5%</td><td class="r">180.6</td></tr>
-      <tr><td class="blue">Z10-18</td><td>F-350</td><td class="r">17.9</td><td class="r">77.8</td><td class="r">95.7</td><td class="r">18.7%</td><td class="r success">81.3%</td><td class="r">240.3</td></tr>
-      <tr><td class="blue">Z10-19</td><td>F-150</td><td class="r">17.2</td><td class="r">67.4</td><td class="r">84.6</td><td class="r">20.3%</td><td class="r success">79.7%</td><td class="r">213.8</td></tr>
-      <tr><td class="blue">Z10-17</td><td>F-150</td><td class="r">19.6</td><td class="r">43.6</td><td class="r">63.2</td><td class="r">31.0%</td><td class="r">69.0%</td><td class="r">142.2</td></tr>
-      <tr class="total-row"><td colspan="2">Fleet total (6 vehicles)</td><td class="r">270.6</td><td class="r">669.0</td><td class="r">939.6</td><td class="r">28.8%</td><td class="r">71.2%</td><td class="r">1,267.6</td></tr>
-    </tbody>
-  </table>
-
-  <div class="finding-card">
-    <div class="finding-header"><span class="badge badge-amber">review</span><span class="finding-title">Z10-23 has the highest idle rate at 42.5% — 76.9 hours idling</span></div>
-    <div class="finding-body">Z10-23 spent nearly 77 hours idling over the 6-month period, representing 42.5% of its total tracked time. This is notably higher than the fleet average of 28.8%. Despite this, Z10-23 is the highest-hours Ford pickup (330.7 engine hours per the engine hours report). High idle time combined with heavy use may increase fuel costs and accelerate engine wear. Consider reviewing idle reduction practices for this vehicle.</div>
-  </div>
-
-  <div class="finding-card">
-    <div class="finding-header"><span class="badge badge-green">efficient</span><span class="finding-title">Z10-18 (F-350) and Z10-20 are the most efficiently utilized vehicles</span></div>
-    <div class="finding-body">Z10-18 and Z10-20 both show working time above 78% of tracked hours, with idle rates of 18.7% and 21.1% respectively — the lowest in the tracked fleet. Z10-18 is notably fuel-heavy at 240.3 gallons despite only 95.7 hours total, suggesting it is doing heavier-load work (consistent with it being an F-350). Z10-20 shows a strong balance of high utilization and moderate fuel consumption.</div>
-  </div>
-
-  <div class="finding-card">
-    <div class="finding-header"><span class="badge badge-blue">note</span><span class="finding-title">No utilization data for Honda UTVs or 9 Ford pickups</span></div>
-    <div class="finding-body">The utilization report only captures data for Z10-10, Z10-17, Z10-18, Z10-19, Z10-20, and Z10-23. All 9 Honda UTVs and Ford pickups Z10-01 through Z10-06, Z10-14, Z10-21, and Z10-22 returned no fuel or hours breakdown. This may be due to different telematics hardware or tracker configurations on those vehicles.</div>
-  </div>
-
-</div>
+</div><!-- .page -->
 
 <script>
-const tc = 'rgba(0,0,0,0.38)';
-const gc = 'rgba(0,0,0,0.07)';
+const DATA = {"sc_fleet":[{"Driver":"SAMUEL DUARTE - 14","vehicle":14,"gal":304.5,"cost":1735.01,"avg_mpg":7.96,"fills":15,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-04","asset_type":"Pickup","eq_source":"Owned","eq_note":null,"ytd_mpg":25.39,"ytd_gal":1994.0,"ytd_cost":11462.53,"ytd_fills":102},{"Driver":"MADDIE REYES - 16","vehicle":16,"gal":12.5,"cost":71.49,"avg_mpg":48.31,"fills":1,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-24","asset_type":"Pickup","eq_source":"Owned","eq_note":"Rental R-9492 ended 5/11/26","ytd_mpg":25.18,"ytd_gal":147.5,"ytd_cost":890.86,"ytd_fills":8},{"Driver":"HUGO RUIZ - 12","vehicle":12,"gal":129.0,"cost":708.7,"avg_mpg":29.22,"fills":4,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-06","asset_type":"Pickup","eq_source":"Owned","eq_note":null,"ytd_mpg":23.04,"ytd_gal":634.8,"ytd_cost":3518.45,"ytd_fills":20},{"Driver":"SHAWN CALDWELL - 8","vehicle":8,"gal":88.8,"cost":523.06,"avg_mpg":18.34,"fills":6,"fuel":"MIDGRADE UNL 10% ETHANOL","eq":"Z10-12","asset_type":"SUV","eq_source":"Owned","eq_note":null,"ytd_mpg":21.69,"ytd_gal":356.4,"ytd_cost":2196.26,"ytd_fills":27},{"Driver":"PEDRO BARANZINI - 10","vehicle":10,"gal":265.4,"cost":1418.22,"avg_mpg":19.99,"fills":11,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-25","asset_type":"Pickup","eq_source":"Owned","eq_note":"Rental water truck R-9457 ended 6/15/26","ytd_mpg":21.05,"ytd_gal":449.6,"ytd_cost":2309.16,"ytd_fills":20},{"Driver":"CRESPIN MENDOZA - 29","vehicle":29,"gal":216.9,"cost":1128.8,"avg_mpg":20.25,"fills":17,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-8047","asset_type":"Rental Truck","eq_source":"Rental (active)","eq_note":"Matched via 'Mendoza Delgado Crespin'","ytd_mpg":20.53,"ytd_gal":259.5,"ytd_cost":1354.52,"ytd_fills":20},{"Driver":"ERIK G GARCIA 32","vehicle":32,"gal":63.1,"cost":334.5,"avg_mpg":19.82,"fills":4,"fuel":"UNLEADED REG 10% ETHANOL","eq":null,"asset_type":null,"eq_source":"Not found","eq_note":"No matching name in equipment or rental inventory","ytd_mpg":19.82,"ytd_gal":63.1,"ytd_cost":334.5,"ytd_fills":4},{"Driver":"ROBERTO RAMIREZ - 25","vehicle":25,"gal":204.9,"cost":1066.25,"avg_mpg":18.17,"fills":8,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-10","asset_type":"Pickup","eq_source":"Owned","eq_note":null,"ytd_mpg":19.53,"ytd_gal":762.5,"ytd_cost":4186.54,"ytd_fills":28},{"Driver":"JORGE SANCHEZ - 9","vehicle":9,"gal":190.2,"cost":985.92,"avg_mpg":20.68,"fills":8,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-11","asset_type":"Pickup","eq_source":"Owned","eq_note":"Listed as 'HR Designated' in inventory","ytd_mpg":19.48,"ytd_gal":480.9,"ytd_cost":2830.45,"ytd_fills":20},{"Driver":"BRISA HERNANDEZ - 39","vehicle":39,"gal":66.4,"cost":341.8,"avg_mpg":19.48,"fills":3,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-1469","asset_type":"Rental Truck","eq_source":"Rental (active)","eq_note":"Matched via 'Brisa Hernandes'","ytd_mpg":19.48,"ytd_gal":66.4,"ytd_cost":341.8,"ytd_fills":3},{"Driver":"ALEYDA ORPINEDA - 4","vehicle":4,"gal":147.3,"cost":765.38,"avg_mpg":18.58,"fills":5,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-01","asset_type":"Pickup","eq_source":"Owned","eq_note":null,"ytd_mpg":19.44,"ytd_gal":754.4,"ytd_cost":4040.62,"ytd_fills":28},{"Driver":"JOSE MEDINA - 5","vehicle":5,"gal":184.1,"cost":1010.72,"avg_mpg":19.98,"fills":7,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-20","asset_type":"Pickup","eq_source":"Owned","eq_note":"Rental R-0969 ended 4/15/26","ytd_mpg":19.22,"ytd_gal":831.9,"ytd_cost":4575.12,"ytd_fills":36},{"Driver":"FERNANDO JORDAN - 2","vehicle":2,"gal":236.7,"cost":1238.82,"avg_mpg":19.05,"fills":9,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-05","asset_type":"Pickup","eq_source":"Owned","eq_note":null,"ytd_mpg":19.17,"ytd_gal":1322.8,"ytd_cost":7117.15,"ytd_fills":51},{"Driver":"WILLIAM SILL - 23","vehicle":23,"gal":80.1,"cost":466.43,"avg_mpg":null,"fills":4,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-09","asset_type":"SUV","eq_source":"Owned","eq_note":"Listed as 'Oliver Sill' in inventory","ytd_mpg":18.64,"ytd_gal":516.0,"ytd_cost":2955.98,"ytd_fills":27},{"Driver":"GISELA LOPEZ - 1","vehicle":1,"gal":92.6,"cost":491.01,"avg_mpg":15.73,"fills":5,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-21","asset_type":"Pickup","eq_source":"Owned","eq_note":"Also shows active rental R-1293 \u2014 verify which is in use","ytd_mpg":18.57,"ytd_gal":452.0,"ytd_cost":2459.81,"ytd_fills":27},{"Driver":"MIREYA GONZALEZ - 13","vehicle":13,"gal":90.8,"cost":495.01,"avg_mpg":13.68,"fills":4,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-03","asset_type":"Pickup","eq_source":"Owned","eq_note":null,"ytd_mpg":18.18,"ytd_gal":378.3,"ytd_cost":2134.68,"ytd_fills":15},{"Driver":"XOCHILT DELGADO - 27","vehicle":27,"gal":84.2,"cost":443.93,"avg_mpg":16.3,"fills":4,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-0342","asset_type":"Rental Truck","eq_source":"Rental (active)","eq_note":"Prior rental R-4024 ended 5/8/26","ytd_mpg":17.83,"ytd_gal":258.9,"ytd_cost":1479.97,"ytd_fills":16},{"Driver":"DOMINIC Z - 15","vehicle":15,"gal":156.0,"cost":852.67,"avg_mpg":16.5,"fills":6,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-07","asset_type":"Pickup","eq_source":"Owned","eq_note":null,"ytd_mpg":17.78,"ytd_gal":841.1,"ytd_cost":4607.22,"ytd_fills":31},{"Driver":"LUIS CARRASCO - 17","vehicle":17,"gal":322.0,"cost":1818.91,"avg_mpg":12.96,"fills":12,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-13","asset_type":"Pickup","eq_source":"Owned","eq_note":null,"ytd_mpg":17.69,"ytd_gal":1853.9,"ytd_cost":10809.39,"ytd_fills":69},{"Driver":"LEO HERNANDEZ - 24","vehicle":24,"gal":258.3,"cost":1424.63,"avg_mpg":15.16,"fills":13,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-02","asset_type":"Pickup","eq_source":"Owned","eq_note":"Matched via 'Jose Leonardo Hernandez Felix'","ytd_mpg":17.61,"ytd_gal":1209.0,"ytd_cost":6874.0,"ytd_fills":58},{"Driver":"MOISES MARTINEZ - 3","vehicle":3,"gal":128.3,"cost":653.88,"avg_mpg":17.34,"fills":5,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-22","asset_type":"Pickup","eq_source":"Owned","eq_note":null,"ytd_mpg":17.42,"ytd_gal":596.1,"ytd_cost":3160.67,"ytd_fills":27},{"Driver":"ARMANDO MEDINA - 30","vehicle":30,"gal":184.6,"cost":949.8,"avg_mpg":17.31,"fills":9,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-1467","asset_type":"Rental Truck","eq_source":"Rental (active)","eq_note":null,"ytd_mpg":17.31,"ytd_gal":184.6,"ytd_cost":949.8,"ytd_fills":9},{"Driver":"ALICIA RIOS - 26","vehicle":26,"gal":111.6,"cost":589.37,"avg_mpg":15.9,"fills":6,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-7328","asset_type":"Rental Truck (ended)","eq_source":"Rental (ended 5/11/26)","eq_note":"Rental R-7328 ended 5/11/26 \u2014 no active replacement on record, but this was Alicia's last known assigned vehicle.","ytd_mpg":17.09,"ytd_gal":298.9,"ytd_cost":1652.5,"ytd_fills":16},{"Driver":"KEVIN ANDREW - 11","vehicle":11,"gal":223.1,"cost":1179.07,"avg_mpg":15.36,"fills":11,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-08","asset_type":"Pickup","eq_source":"Owned","eq_note":null,"ytd_mpg":15.93,"ytd_gal":1353.6,"ytd_cost":7350.7,"ytd_fills":65},{"Driver":"JAIME SUAREZ - 7","vehicle":7,"gal":539.2,"cost":2845.94,"avg_mpg":13.78,"fills":21,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-15","asset_type":"Pickup","eq_source":"Owned","eq_note":null,"ytd_mpg":14.84,"ytd_gal":2515.6,"ytd_cost":13892.15,"ytd_fills":95},{"Driver":"JOSE ANTONIO S - 21","vehicle":21,"gal":372.2,"cost":1968.23,"avg_mpg":23.8,"fills":15,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-19","asset_type":"Pickup","eq_source":"Owned","eq_note":"Matched via 'Jose Samano'; rental R-7685 ended 6/2/26","ytd_mpg":13.6,"ytd_gal":1343.2,"ytd_cost":7283.37,"ytd_fills":53},{"Driver":"JUAN GARCIA - 20","vehicle":20,"gal":123.7,"cost":659.49,"avg_mpg":null,"fills":4,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-5948","asset_type":"Rental Truck (ended)","eq_source":"Rental (ended 6/2/26)","eq_note":"Rental R-5948 ended 6/2/26 \u2014 no active replacement on record, but this was Juan's last known assigned vehicle.","ytd_mpg":12.75,"ytd_gal":1326.6,"ytd_cost":7471.15,"ytd_fills":55},{"Driver":"ISIDRO TAPIA - 40","vehicle":40,"gal":180.4,"cost":962.58,"avg_mpg":12.37,"fills":6,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-3072","asset_type":"Rental Truck","eq_source":"Rental (active)","eq_note":"Matched via 'Isidro Tapia Ceballos'","ytd_mpg":12.37,"ytd_gal":180.4,"ytd_cost":962.58,"ytd_fills":6},{"Driver":"ARTURO AYALA - 6","vehicle":6,"gal":438.6,"cost":2285.32,"avg_mpg":12.08,"fills":20,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-23","asset_type":"Pickup","eq_source":"Owned","eq_note":null,"ytd_mpg":12.3,"ytd_gal":1752.4,"ytd_cost":9437.76,"ytd_fills":87},{"Driver":"JAVIER ROSAS - 33","vehicle":33,"gal":296.0,"cost":1642.1,"avg_mpg":9.43,"fills":6,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-6099","asset_type":"Rental Truck","eq_source":"Rental (active)","eq_note":null,"ytd_mpg":11.25,"ytd_gal":1312.3,"ytd_cost":7150.49,"ytd_fills":34},{"Driver":"RAFAEL CAMACHO - 22","vehicle":22,"gal":470.6,"cost":3139.9,"avg_mpg":10.46,"fills":17,"fuel":"DIESEL FUEL CLEAR","eq":"Z10-17","asset_type":"Pickup","eq_source":"Owned","eq_note":"Rental R-7356 ended 6/19/26","ytd_mpg":10.39,"ytd_gal":2354.5,"ytd_cost":16633.33,"ytd_fills":96},{"Driver":"FREDY ZAVALA - 18","vehicle":18,"gal":477.8,"cost":2519.47,"avg_mpg":8.59,"fills":10,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-5282","asset_type":"Rental Truck","eq_source":"Rental (active)","eq_note":null,"ytd_mpg":9.04,"ytd_gal":2327.3,"ytd_cost":12564.68,"ytd_fills":53},{"Driver":"LUIS EDUARDO L - 28","vehicle":28,"gal":449.2,"cost":2374.86,"avg_mpg":8.63,"fills":23,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-4554","asset_type":"Rental Truck","eq_source":"Rental (active)","eq_note":null,"ytd_mpg":8.34,"ytd_gal":631.3,"ytd_cost":3368.27,"ytd_fills":29},{"Driver":"FERNANDO PEREZ-31","vehicle":31,"gal":234.8,"cost":1277.87,"avg_mpg":7.75,"fills":10,"fuel":"UNLEADED REG 10% ETHANOL","eq":null,"asset_type":null,"eq_source":"Not found","eq_note":"No matching name in equipment or rental inventory","ytd_mpg":7.75,"ytd_gal":234.8,"ytd_cost":1277.87,"ytd_fills":10},{"Driver":"RAFAEL GARCIA-38","vehicle":38,"gal":404.8,"cost":2144.67,"avg_mpg":6.84,"fills":22,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-5820","asset_type":"Rental Truck","eq_source":"Rental (active)","eq_note":null,"ytd_mpg":6.84,"ytd_gal":404.8,"ytd_cost":2144.67,"ytd_fills":22}],"sc_totals":{"gal":7828.9,"cost":42513.81,"drivers":35,"fills":331},"bsmart":[{"reg_clean":"(unassigned)","gal":1264.8,"fills":47,"primary_driver":"Javier Rosas","fuel_type":"Dyed Diesel ","category":"Uncategorized"},{"reg_clean":"Z11-02","gal":909.9,"fills":8,"primary_driver":"Armando  Flores","fuel_type":"Dyed Diesel ","category":"Bulk diesel tank"},{"reg_clean":"FORKLIFT.704","gal":622.5,"fills":78,"primary_driver":"Ignacio Romualdo","fuel_type":"Gasoline","category":"Forklift"},{"reg_clean":"WATERTRUCK.2291","gal":396.2,"fills":13,"primary_driver":"Pedro Martinez","fuel_type":"Gasoline","category":"Water truck"},{"reg_clean":"Z11-01","gal":355.0,"fills":3,"primary_driver":"Javier Rosas","fuel_type":"Dyed Diesel ","category":"Bulk diesel tank"},{"reg_clean":"0889.TRUCK","gal":161.3,"fills":12,"primary_driver":"Samuel Duarte","fuel_type":"Gasoline","category":"Truck"},{"reg_clean":"ATV.NORTH","gal":128.6,"fills":12,"primary_driver":"Arturo Ayala","fuel_type":"Gasoline","category":"ATV"},{"reg_clean":"ATV.SOUTH","gal":120.9,"fills":9,"primary_driver":"Samuel Duarte","fuel_type":"Gasoline","category":"ATV"},{"reg_clean":"6942.TRUCK","gal":90.4,"fills":5,"primary_driver":"Arturo Ayala","fuel_type":"Gasoline","category":"Truck"},{"reg_clean":"GENERATOR.704","gal":75.1,"fills":16,"primary_driver":"Ignacio Romualdo","fuel_type":"Gasoline","category":"Generator"},{"reg_clean":"TONY.GAS.CAN","gal":23.6,"fills":5,"primary_driver":"Tony Samano","fuel_type":"Gasoline","category":"Foreman gas can"},{"reg_clean":"RAFAEL.GAS.CAN","gal":21.7,"fills":3,"primary_driver":"Rafael Camacho","fuel_type":"Gasoline","category":"Foreman gas can"},{"reg_clean":"FREDY.GAS.CAN","gal":15.3,"fills":3,"primary_driver":"Fredy  Zavala","fuel_type":"Gasoline","category":"Foreman gas can"},{"reg_clean":"JAVIER.GAS.CAN","gal":4.3,"fills":1,"primary_driver":"Javier Rosas","fuel_type":"Gasoline","category":"Foreman gas can"}],"bsmart_totals":{"gal":4189.7,"fills":215},"paper":[{"eq":"2005","gal":239.8,"fills":23,"foreman":"Javier","operators":"","matched_asset":"Z20-05 \u2014 Tractor (owned)","match_type":"likely","match_note":"Same shorthand as above."},{"eq":"CK0623","gal":191.6,"fills":14,"foreman":"Fredy","operators":"Armando, Erik, Jose, Juan, Ruben","matched_asset":null,"match_type":"flag","match_note":"No match found in current inventory. Based on activity (dusting, herbicide, disking) it's likely a duster, sprayer, or cane-cutter attachment (Z50/Z60/Z30 series) \u2014 none of those carry a serial number matching '0623' in the current export."},{"eq":"20-04","gal":187.3,"fills":16,"foreman":"Fredy","operators":"Alexander, Jose, Jose Luis, Juan","matched_asset":"Z20-04 \u2014 Tractor (owned)","match_type":"confirmed","match_note":null},{"eq":"Kubota 0869","gal":166.6,"fills":15,"foreman":"Javier","operators":"","matched_asset":"R-0869 \u2014 Tractor 4WD LPC","match_type":"confirmed","match_note":null},{"eq":"0889","gal":152.6,"fills":11,"foreman":"Ignacio/Samuel","operators":"Gerardo","matched_asset":"R-0889 \u2014 Truck (Pickup 1/2T Crew 4WD Gas)","match_type":"flag","match_note":"Rental record shows this truck returned 3/18/26 (assigned to Bernandino Sanchez Jimenez), but both paper logs and B.Smart digital data show it actively fueled through July. Worth confirming: was it purchased after the rental, relabeled, or does the rental record need updating?"},{"eq":"New Holland R2601","gal":145.7,"fills":22,"foreman":"Javier","operators":"","matched_asset":"R-2601 \u2014 Tractor 4WD ROPS","match_type":"confirmed","match_note":null},{"eq":"New Holland (ranch)","gal":142.1,"fills":16,"foreman":"Fredy","operators":"Juan, Ruben","matched_asset":null,"match_type":"none","match_note":"Ranch-based tractor; no direct rental/inventory number given on the paper log to match."},{"eq":"2006","gal":129.6,"fills":13,"foreman":"Javier","operators":"","matched_asset":"Z20-06 \u2014 Tractor (owned)","match_type":"likely","match_note":"Paper log drops the 'Z' and dash (written '2006' not '20-06') \u2014 number sequence and hours pattern match the Z20 tractor series."},{"eq":"9981","gal":120.4,"fills":12,"foreman":"Ignacio","operators":"Gerardo, Nacho","matched_asset":"R-9981 \u2014 Forklift, 6000LB PNEU DF","match_type":"confirmed","match_note":null},{"eq":"R-0991 (Kubota)","gal":115.2,"fills":14,"foreman":"Javier","operators":"","matched_asset":"R-0991 \u2014 Tractor 4WD ROPS","match_type":"confirmed","match_note":null},{"eq":"TK0918","gal":114.2,"fills":10,"foreman":"Fredy","operators":"Jose, Ruben","matched_asset":"R-0918 \u2014 Tractor 4WD ROPS","match_type":"likely","match_note":"Number matches; rental record doesn't list a brand, so can't fully confirm this is the same 'TK' unit."},{"eq":"6092","gal":102.1,"fills":12,"foreman":"Ignacio","operators":"Arturo, Cristian","matched_asset":"R-6092 \u2014 Forklift, 6000LB PNEU DF","match_type":"confirmed","match_note":null},{"eq":"2003","gal":100.7,"fills":10,"foreman":"Javier","operators":"","matched_asset":"Z20-03 \u2014 Tractor (owned)","match_type":"likely","match_note":"Same shorthand as above."},{"eq":"9982","gal":90.6,"fills":9,"foreman":"Ignacio","operators":"Ricardo","matched_asset":"R-9982 \u2014 Forklift, 6000LB PNEU DF","match_type":"confirmed","match_note":null},{"eq":"9983","gal":84.5,"fills":9,"foreman":"Ignacio","operators":"Armando, Arturo, Cristian, Ricardo","matched_asset":null,"match_type":"flag","match_note":"No exact rental match. Fuel pattern matches Ignacio's other forklifts (5-13 gal, same operators) \u2014 likely a forklift, possibly R-6903 (unmatched forklift in rental list) or a misread digit."},{"eq":"405 (canal motor)","gal":80.1,"fills":1,"foreman":"Fredy","operators":"","matched_asset":null,"match_type":"none","match_note":"Canal pump motor at Ranch 405 \u2014 infrastructure equipment, not in vehicle/tractor inventory."},{"eq":"20-02","gal":78.1,"fills":6,"foreman":"Fredy","operators":"Armando, Juan, Ruben","matched_asset":"Z20-02 \u2014 Tractor (owned)","match_type":"confirmed","match_note":null},{"eq":"9262","gal":72.8,"fills":9,"foreman":"Ignacio","operators":"Armando, Arturo, Cristian, Nacho","matched_asset":"R-9262 \u2014 Forklift, 6000LB Single DBL DF","match_type":"confirmed","match_note":null},{"eq":"Generador","gal":68.9,"fills":15,"foreman":"Ignacio","operators":"Gerardo, Nacho","matched_asset":null,"match_type":"none","match_note":"Portable generator \u2014 matches the GENERATOR.704 account in the Digital tab, not a numbered vehicle asset."},{"eq":"20-01","gal":67.1,"fills":6,"foreman":"Fredy","operators":"Juan","matched_asset":"Z20-01 \u2014 Tractor (owned)","match_type":"confirmed","match_note":null},{"eq":"ATV-15-06","gal":54.0,"fills":8,"foreman":"Arturo","operators":"Rosario","matched_asset":"Z15-06 \u2014 ATV (Rosario Garcia)","match_type":"confirmed","match_note":null},{"eq":"5057","gal":34.3,"fills":7,"foreman":"Ignacio","operators":"Gerardo","matched_asset":"R-5057 \u2014 Forklift, 6000LB PNEU DF","match_type":"confirmed","match_note":null},{"eq":"John Deere Demo","gal":31.6,"fills":1,"foreman":"Fredy","operators":"Joan","matched_asset":null,"match_type":"none","match_note":"Vendor demo unit \u2014 not part of owned or rental inventory."},{"eq":"ATV-15-09","gal":28.0,"fills":5,"foreman":"Arturo","operators":"Javier","matched_asset":"Z15-09 \u2014 ATV (unassigned/TBD on file)","match_type":"flag","match_note":"Paper log shows 'Javier' operating this unit, but inventory lists Z15-09 as unassigned (TBD). Likely Javier Vera covering both units \u2014 worth updating the inventory assignment."},{"eq":"15-03","gal":25.3,"fills":5,"foreman":"Samuel","operators":"Jose C","matched_asset":"Z15-03 \u2014 ATV (Jose Cornejo)","match_type":"confirmed","match_note":null},{"eq":"15-02","gal":25.1,"fills":5,"foreman":"Samuel","operators":"Merced G","matched_asset":"Z15-02 \u2014 ATV (Mercedes Gonzalez)","match_type":"confirmed","match_note":null},{"eq":"ATV-15-08","gal":24.0,"fills":3,"foreman":"Arturo","operators":"Javier","matched_asset":"Z15-08 \u2014 ATV (Javier Vera)","match_type":"confirmed","match_note":"Operator is Javier Vera \u2014 a different person from foreman Javier Rosas."},{"eq":"ATV-15-07","gal":24.0,"fills":3,"foreman":"Arturo","operators":"Alfonso","matched_asset":"Z15-07 \u2014 ATV (Alfonso Herrea)","match_type":"confirmed","match_note":null},{"eq":"15-05","gal":20.0,"fills":4,"foreman":"Samuel","operators":"Heraclio","matched_asset":"Z15-05 \u2014 ATV (Heraclio Maldonado)","match_type":"confirmed","match_note":null},{"eq":"15-04","gal":20.0,"fills":4,"foreman":"Samuel","operators":"Jose H","matched_asset":"Z15-04 \u2014 ATV (Miguel Maldonado on file)","match_type":"flag","match_note":"Paper log operator is 'Jose H', but inventory lists Z15-04 to Miguel Maldonado. Possible substitute operator that day, or inventory record is outdated."},{"eq":"15-01","gal":20.0,"fills":4,"foreman":"Samuel","operators":"Jesus G","matched_asset":"Z15-01 \u2014 ATV (Jesus Garcia)","match_type":"confirmed","match_note":null},{"eq":"9062","gal":13.3,"fills":1,"foreman":"Ignacio","operators":"Arturo","matched_asset":null,"match_type":"flag","match_note":"Single entry, likely a transcription slip of 9262 (same foreman/operator pattern) rather than a distinct unit."},{"eq":"Forklift","gal":6.0,"fills":1,"foreman":"Arturo","operators":"","matched_asset":null,"match_type":"none","match_note":"Generic entry, no EQ# given on the paper log."}],"paper_totals":{"gal":2775.5,"fills":294},"reconciliation":[{"foreman":"Fredy","digital":873.6,"paper":892.1,"variance":-18.5,"pct":-2.1},{"foreman":"Javier","digital":1294.5,"paper":897.5,"variance":397.0,"pct":44.2},{"foreman":"Ignacio","digital":719.4,"paper":600.4,"variance":119.0,"pct":19.8},{"foreman":"Samuel","digital":260.5,"paper":249.5,"variance":11.0,"pct":4.4},{"foreman":"Arturo","digital":219.0,"paper":136.0,"variance":83.0,"pct":61.0}],"engine_ref":[{"eq":"20-01","make":"JOHN DEERE","model":"5100GN","hours":2718},{"eq":"20-02","make":"JOHN DEERE","model":"5100GN","hours":14},{"eq":"20-03","make":"JOHN DEERE","model":"5100GN","hours":2564},{"eq":"20-04","make":"JOHN DEERE","model":"5100GN","hours":3281},{"eq":"20-05","make":"JOHN DEERE","model":"5100GN","hours":1192},{"eq":"20-06","make":"JOHN DEERE","model":"5100GN","hours":2207},{"eq":"20-10","make":"KUBOTA","model":"M5-111","hours":"---"},{"eq":"20-07","make":"KUBOTA","model":"M-5-N-111","hours":"---"},{"eq":"20-09","make":"KUBOTA","model":"M5-111","hours":"---"},{"eq":"20-08","make":"KUBOTA","model":"M5-111","hours":"---"},{"eq":"Honda 15-08","make":"HONDA","model":"TRX420","hours":365},{"eq":"Honda 15-07","make":"HONDA","model":"TRX420","hours":400},{"eq":"Honda 15-06","make":"HONDA","model":"TRX420","hours":486},{"eq":"Honda 15-04","make":"HONDA","model":"TRX420","hours":370},{"eq":"Honda 15-03","make":"HONDA","model":"TRX420","hours":416},{"eq":"Honda 15-02","make":"HONDA","model":"TRX420","hours":509},{"eq":"Honda 15-01","make":"HONDA","model":"TRX420","hours":440},{"eq":"Honda 15-09","make":"HONDA","model":"TRX420","hours":267},{"eq":"Honda 15-05","make":"HONDA","model":"TRX420","hours":408},{"eq":"Z10-06","make":"FORD","model":"F-150","hours":1},{"eq":"Z10-05","make":"FORD","model":"F-150","hours":4},{"eq":"Z10-03","make":"FORD","model":"F-150","hours":1},{"eq":"Z10-04","make":"FORD","model":"F-150","hours":6},{"eq":"Z10-02","make":"FORD","model":"F-150","hours":1},{"eq":"Z10-01","make":"FORD","model":"F-150","hours":2},{"eq":"Z10-10","make":"FORD","model":"F-150","hours":427},{"eq":"Z10-20","make":"FORD","model":"F-150","hours":418},{"eq":"Z10-18","make":"FORD","model":"F-350","hours":144},{"eq":"Z10-19","make":"FORD","model":"F-150","hours":198},{"eq":"Z10-17","make":"FORD","model":"F-150","hours":219},{"eq":"Z10-14","make":"FORD","model":"F-350","hours":1},{"eq":"Z10-21","make":"FORD","model":"F-150","hours":202},{"eq":"Z10-23","make":"FORD","model":"F-150","hours":556},{"eq":"Z10-22","make":"FORD","model":"F-150","hours":240}],"top5":{"sc_efficient":[{"Driver":"MADDIE REYES - 16","vehicle":16,"gal":12.5,"cost":71.49,"avg_mpg":48.31,"fills":1,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-24","asset_type":"Pickup","eq_source":"Owned","eq_note":"Rental R-9492 ended 5/11/26"},{"Driver":"HUGO RUIZ - 12","vehicle":12,"gal":129.0,"cost":708.7,"avg_mpg":29.22,"fills":4,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-06","asset_type":"Pickup","eq_source":"Owned","eq_note":null},{"Driver":"JOSE ANTONIO S - 21","vehicle":21,"gal":372.2,"cost":1968.23,"avg_mpg":23.8,"fills":15,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-19","asset_type":"Pickup","eq_source":"Owned","eq_note":"Matched via 'Jose Samano'; rental R-7685 ended 6/2/26"},{"Driver":"JORGE SANCHEZ - 9","vehicle":9,"gal":190.2,"cost":985.92,"avg_mpg":20.68,"fills":8,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-11","asset_type":"Pickup","eq_source":"Owned","eq_note":"Listed as 'HR Designated' in inventory"},{"Driver":"CRESPIN MENDOZA - 29","vehicle":29,"gal":216.9,"cost":1128.8,"avg_mpg":20.25,"fills":17,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-8047","asset_type":"Rental Truck","eq_source":"Rental (active)","eq_note":"Matched via 'Mendoza Delgado Crespin'"}],"sc_inefficient":[{"Driver":"RAFAEL GARCIA-38","vehicle":38,"gal":404.8,"cost":2144.67,"avg_mpg":6.84,"fills":22,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-5820","asset_type":"Rental Truck","eq_source":"Rental (active)","eq_note":null},{"Driver":"FERNANDO PEREZ-31","vehicle":31,"gal":234.8,"cost":1277.87,"avg_mpg":7.75,"fills":10,"fuel":"UNLEADED REG 10% ETHANOL","eq":null,"asset_type":null,"eq_source":"Not found","eq_note":"No matching name in equipment or rental inventory"},{"Driver":"SAMUEL DUARTE - 14","vehicle":14,"gal":304.5,"cost":1735.01,"avg_mpg":7.96,"fills":15,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-04","asset_type":"Pickup","eq_source":"Owned","eq_note":null},{"Driver":"FREDY ZAVALA - 18","vehicle":18,"gal":477.8,"cost":2519.47,"avg_mpg":8.59,"fills":10,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-5282","asset_type":"Rental Truck","eq_source":"Rental (active)","eq_note":null},{"Driver":"LUIS EDUARDO L - 28","vehicle":28,"gal":449.2,"cost":2374.86,"avg_mpg":8.63,"fills":23,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-4554","asset_type":"Rental Truck","eq_source":"Rental (active)","eq_note":null}],"digital_top5":[{"reg_clean":"(unassigned)","gal":1264.8,"fills":47,"primary_driver":"Javier Rosas","fuel_type":"Dyed Diesel ","category":"Uncategorized"},{"reg_clean":"Z11-02","gal":909.9,"fills":8,"primary_driver":"Armando  Flores","fuel_type":"Dyed Diesel ","category":"Bulk diesel tank"},{"reg_clean":"FORKLIFT.704","gal":622.5,"fills":78,"primary_driver":"Ignacio Romualdo","fuel_type":"Gasoline","category":"Forklift"},{"reg_clean":"WATERTRUCK.2291","gal":396.2,"fills":13,"primary_driver":"Pedro Martinez","fuel_type":"Gasoline","category":"Water truck"},{"reg_clean":"Z11-01","gal":355.0,"fills":3,"primary_driver":"Javier Rosas","fuel_type":"Dyed Diesel ","category":"Bulk diesel tank"}],"paper_efficient":[{"eq":"New Holland R2601","foreman":"Javier","hours_span":152.9,"gal_total":145.7,"gal_per_hr":0.953,"flag":null},{"eq":"TK0918","foreman":"Fredy","hours_span":104.5,"gal_total":114.2,"gal_per_hr":1.093,"flag":null},{"eq":"2003","foreman":"Javier","hours_span":92.0,"gal_total":100.7,"gal_per_hr":1.094,"flag":null},{"eq":"R-0991 (Kubota)","foreman":"Javier","hours_span":100.9,"gal_total":115.1,"gal_per_hr":1.141,"flag":null},{"eq":"20-04","foreman":"Fredy","hours_span":133.0,"gal_total":187.3,"gal_per_hr":1.408,"flag":null}],"paper_inefficient":[{"eq":"20-02","foreman":"Fredy","hours_span":49.0,"gal_total":78.1,"gal_per_hr":1.594,"flag":null},{"eq":"CK0623","foreman":"Fredy","hours_span":120.8,"gal_total":191.6,"gal_per_hr":1.586,"flag":null},{"eq":"20-01","foreman":"Fredy","hours_span":44.0,"gal_total":67.1,"gal_per_hr":1.525,"flag":null},{"eq":"2005","foreman":"Javier","hours_span":164.0,"gal_total":239.8,"gal_per_hr":1.462,"flag":null},{"eq":"2006","foreman":"Javier","hours_span":91.0,"gal_total":129.6,"gal_per_hr":1.424,"flag":null}],"sc_ytd_efficient":[{"Driver":"SAMUEL DUARTE - 14","vehicle":14,"gal":304.5,"cost":1735.01,"avg_mpg":7.96,"fills":15,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-04","asset_type":"Pickup","eq_source":"Owned","eq_note":null,"ytd_mpg":25.39,"ytd_gal":1994.0,"ytd_cost":11462.53,"ytd_fills":102},{"Driver":"MADDIE REYES - 16","vehicle":16,"gal":12.5,"cost":71.49,"avg_mpg":48.31,"fills":1,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-24","asset_type":"Pickup","eq_source":"Owned","eq_note":"Rental R-9492 ended 5/11/26","ytd_mpg":25.18,"ytd_gal":147.5,"ytd_cost":890.86,"ytd_fills":8},{"Driver":"HUGO RUIZ - 12","vehicle":12,"gal":129.0,"cost":708.7,"avg_mpg":29.22,"fills":4,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-06","asset_type":"Pickup","eq_source":"Owned","eq_note":null,"ytd_mpg":23.04,"ytd_gal":634.8,"ytd_cost":3518.45,"ytd_fills":20},{"Driver":"SHAWN CALDWELL - 8","vehicle":8,"gal":88.8,"cost":523.06,"avg_mpg":18.34,"fills":6,"fuel":"MIDGRADE UNL 10% ETHANOL","eq":"Z10-12","asset_type":"SUV","eq_source":"Owned","eq_note":null,"ytd_mpg":21.69,"ytd_gal":356.4,"ytd_cost":2196.26,"ytd_fills":27},{"Driver":"PEDRO BARANZINI - 10","vehicle":10,"gal":265.4,"cost":1418.22,"avg_mpg":19.99,"fills":11,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-25","asset_type":"Pickup","eq_source":"Owned","eq_note":"Rental water truck R-9457 ended 6/15/26","ytd_mpg":21.05,"ytd_gal":449.6,"ytd_cost":2309.16,"ytd_fills":20}],"sc_ytd_inefficient":[{"Driver":"RAFAEL GARCIA-38","vehicle":38,"gal":404.8,"cost":2144.67,"avg_mpg":6.84,"fills":22,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-5820","asset_type":"Rental Truck","eq_source":"Rental (active)","eq_note":null,"ytd_mpg":6.84,"ytd_gal":404.8,"ytd_cost":2144.67,"ytd_fills":22},{"Driver":"FERNANDO PEREZ-31","vehicle":31,"gal":234.8,"cost":1277.87,"avg_mpg":7.75,"fills":10,"fuel":"UNLEADED REG 10% ETHANOL","eq":null,"asset_type":null,"eq_source":"Not found","eq_note":"No matching name in equipment or rental inventory","ytd_mpg":7.75,"ytd_gal":234.8,"ytd_cost":1277.87,"ytd_fills":10},{"Driver":"LUIS EDUARDO L - 28","vehicle":28,"gal":449.2,"cost":2374.86,"avg_mpg":8.63,"fills":23,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-4554","asset_type":"Rental Truck","eq_source":"Rental (active)","eq_note":null,"ytd_mpg":8.34,"ytd_gal":631.3,"ytd_cost":3368.27,"ytd_fills":29},{"Driver":"FREDY ZAVALA - 18","vehicle":18,"gal":477.8,"cost":2519.47,"avg_mpg":8.59,"fills":10,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-5282","asset_type":"Rental Truck","eq_source":"Rental (active)","eq_note":null,"ytd_mpg":9.04,"ytd_gal":2327.3,"ytd_cost":12564.68,"ytd_fills":53},{"Driver":"RAFAEL CAMACHO - 22","vehicle":22,"gal":470.6,"cost":3139.9,"avg_mpg":10.46,"fills":17,"fuel":"DIESEL FUEL CLEAR","eq":"Z10-17","asset_type":"Pickup","eq_source":"Owned","eq_note":"Rental R-7356 ended 6/19/26","ytd_mpg":10.39,"ytd_gal":2354.5,"ytd_cost":16633.33,"ytd_fills":96}],"sc_jul_gal":[{"Driver":"JAIME SUAREZ - 7","vehicle":7,"gal":539.2,"cost":2845.94,"avg_mpg":13.78,"fills":21,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-15","asset_type":"Pickup","eq_source":"Owned","eq_note":null,"ytd_mpg":14.84,"ytd_gal":2515.6,"ytd_cost":13892.15,"ytd_fills":95},{"Driver":"FREDY ZAVALA - 18","vehicle":18,"gal":477.8,"cost":2519.47,"avg_mpg":8.59,"fills":10,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-5282","asset_type":"Rental Truck","eq_source":"Rental (active)","eq_note":null,"ytd_mpg":9.04,"ytd_gal":2327.3,"ytd_cost":12564.68,"ytd_fills":53},{"Driver":"RAFAEL CAMACHO - 22","vehicle":22,"gal":470.6,"cost":3139.9,"avg_mpg":10.46,"fills":17,"fuel":"DIESEL FUEL CLEAR","eq":"Z10-17","asset_type":"Pickup","eq_source":"Owned","eq_note":"Rental R-7356 ended 6/19/26","ytd_mpg":10.39,"ytd_gal":2354.5,"ytd_cost":16633.33,"ytd_fills":96},{"Driver":"LUIS EDUARDO L - 28","vehicle":28,"gal":449.2,"cost":2374.86,"avg_mpg":8.63,"fills":23,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-4554","asset_type":"Rental Truck","eq_source":"Rental (active)","eq_note":null,"ytd_mpg":8.34,"ytd_gal":631.3,"ytd_cost":3368.27,"ytd_fills":29},{"Driver":"ARTURO AYALA - 6","vehicle":6,"gal":438.6,"cost":2285.32,"avg_mpg":12.08,"fills":20,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-23","asset_type":"Pickup","eq_source":"Owned","eq_note":null,"ytd_mpg":12.3,"ytd_gal":1752.4,"ytd_cost":9437.76,"ytd_fills":87}],"sc_ytd_gal":[{"Driver":"JAIME SUAREZ - 7","vehicle":7,"gal":539.2,"cost":2845.94,"avg_mpg":13.78,"fills":21,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-15","asset_type":"Pickup","eq_source":"Owned","eq_note":null,"ytd_mpg":14.84,"ytd_gal":2515.6,"ytd_cost":13892.15,"ytd_fills":95},{"Driver":"RAFAEL CAMACHO - 22","vehicle":22,"gal":470.6,"cost":3139.9,"avg_mpg":10.46,"fills":17,"fuel":"DIESEL FUEL CLEAR","eq":"Z10-17","asset_type":"Pickup","eq_source":"Owned","eq_note":"Rental R-7356 ended 6/19/26","ytd_mpg":10.39,"ytd_gal":2354.5,"ytd_cost":16633.33,"ytd_fills":96},{"Driver":"FREDY ZAVALA - 18","vehicle":18,"gal":477.8,"cost":2519.47,"avg_mpg":8.59,"fills":10,"fuel":"UNLEADED REG 10% ETHANOL","eq":"R-5282","asset_type":"Rental Truck","eq_source":"Rental (active)","eq_note":null,"ytd_mpg":9.04,"ytd_gal":2327.3,"ytd_cost":12564.68,"ytd_fills":53},{"Driver":"SAMUEL DUARTE - 14","vehicle":14,"gal":304.5,"cost":1735.01,"avg_mpg":7.96,"fills":15,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-04","asset_type":"Pickup","eq_source":"Owned","eq_note":null,"ytd_mpg":25.39,"ytd_gal":1994.0,"ytd_cost":11462.53,"ytd_fills":102},{"Driver":"LUIS CARRASCO - 17","vehicle":17,"gal":322.0,"cost":1818.91,"avg_mpg":12.96,"fills":12,"fuel":"UNLEADED REG 10% ETHANOL","eq":"Z10-13","asset_type":"Pickup","eq_source":"Owned","eq_note":null,"ytd_mpg":17.69,"ytd_gal":1853.9,"ytd_cost":10809.39,"ytd_fills":69}]},"findings":[{"badge":"red","title":"Javier Rosas \u2014 44.2% more fuel drawn digitally than logged on paper","body":"Javier drew 1,294.5 gal from the B.Smart pump (gas can + Z11-01 bulk tank + unassigned draws under his name) in July, but his handwritten logs for his six tractors only account for 897.5 gal. Some of the \u201cunassigned\u201d B.Smart draws (935 gal with no equipment tag) are likely his tractor fuel that just was not tagged at the pump, but worth confirming nothing is going untracked."},{"badge":"amber","title":"Arturo Ayala \u2014 61% gap between digital draws and paper log","body":"Arturo\u2019s paper logs (mostly ATV fueling for irrigators) account for only 136.0 of the 219.0 gal drawn under his name digitally. His paper batch may be incomplete, or some of his digital draws (6942.TRUCK, ATV.NORTH) are equipment that is not on paper at all."},{"badge":"red","title":"Truck 0889 shows as returned to the rental company, but is still actively fueled","body":"The Rental Equipment Summary shows R-0889 returned on 3/18/26. Yet both the paper logs and B.Smart digital data show it actively fueled all through July (152.6 gal on paper, 161.3 gal digitally \u2014 those two reconcile well with each other). Either the truck was purchased after the rental ended, relabeled, or the rental record needs updating."},{"badge":"amber","title":"ATV Z15-04 \u2014 paper log operator does not match inventory assignment","body":"Samuel\u2019s paper log shows \u201cJose H\u201d operating unit 15-04, but Equipment Inventory has that ATV assigned to Miguel Maldonado. Could be a substitute driver that day, or the inventory record is out of date."},{"badge":"amber","title":"CK0623 and forklift unit 9983 have no match in current inventory","body":"CK0623 (Fredy, 191.6 gal in July) does not match any serial number in either inventory file; based on its activity (dusting/herbicide/disking) it is likely a duster, sprayer, or cane-cutter attachment. Forklift unit \u201c9983\u201d (Ignacio, 84.5 gal) also has no exact match, though its fueling pattern matches Ignacio\u2019s other confirmed forklifts \u2014 possibly R-6903."},{"badge":"amber","title":"Kubota 0869\u2019s hour meter moved backward mid-month","body":"Javier\u2019s paper log for Kubota 0869 shows the hour-meter reading decrease partway through July, which is not physically possible for a single unit. Likely a meter reset, a rental swap, or a transcription slip. Excluded from the efficiency ranking until resolved."},{"badge":"amber","title":"Gisela Lopez shows both an owned truck and an active rental","body":"Equipment Inventory lists Gisela on owned truck Z10-21, but Rental Equipment Summary also shows her on active rental R-1293 with no return date. Worth confirming which vehicle she is actually driving."},{"badge":"amber","title":"Four SC Fleet drivers have no vehicle on file","body":"Fernando Perez, Juan Garcia, Alicia Rios, and Erik G Garcia all show fuel-card activity in July but no matching EQ# in either inventory file. Juan Garcia\u2019s and Alicia Rios\u2019s rentals ended months ago (6/2 and 5/11) with nothing recorded since."},{"badge":"amber","title":"8 zero-quantity transactions in B.Smart digital records","body":"6 under Ignacio, 2 under Javier, spread across July \u2014 pump triggered but nothing dispensed. Looks like a system logging quirk rather than a real fuel event, but worth a spot check if it keeps happening."}],"fleet_chart":{"units":[{"eq":"2005","foreman":"Javier","hours_span":164.0,"gal_total":239.8,"gal_per_hr":1.462,"flag":null,"label":"Z20-05"},{"eq":"New Holland R2601","foreman":"Javier","hours_span":152.9,"gal_total":145.7,"gal_per_hr":0.953,"flag":null,"label":"NH R2601"},{"eq":"20-04","foreman":"Fredy","hours_span":133.0,"gal_total":187.3,"gal_per_hr":1.408,"flag":null,"label":"Z20-04"},{"eq":"CK0623","foreman":"Fredy","hours_span":120.8,"gal_total":191.6,"gal_per_hr":1.586,"flag":null,"label":"CK0623"},{"eq":"TK0918","foreman":"Fredy","hours_span":104.5,"gal_total":114.2,"gal_per_hr":1.093,"flag":null,"label":"TK0918"},{"eq":"R-0991 (Kubota)","foreman":"Javier","hours_span":100.9,"gal_total":115.1,"gal_per_hr":1.141,"flag":null,"label":"R-0991"},{"eq":"2003","foreman":"Javier","hours_span":92.0,"gal_total":100.7,"gal_per_hr":1.094,"flag":null,"label":"Z20-03"},{"eq":"2006","foreman":"Javier","hours_span":91.0,"gal_total":129.6,"gal_per_hr":1.424,"flag":null,"label":"Z20-06"},{"eq":"20-02","foreman":"Fredy","hours_span":49.0,"gal_total":78.1,"gal_per_hr":1.594,"flag":null,"label":"Z20-02"},{"eq":"20-01","foreman":"Fredy","hours_span":44.0,"gal_total":67.1,"gal_per_hr":1.525,"flag":null,"label":"Z20-01"}],"total_hours":1052.1,"total_gal":1369.2,"avg_rate":1.301}};
 
-const ALL_DATA = [
-  {name:'Honda 15-05', hrs:397.1, type:'Honda'},
-  {name:'Honda 15-02', hrs:389.0, type:'Honda'},
-  {name:'Honda 15-06', hrs:372.1, type:'Honda'},
-  {name:'Honda 15-01', hrs:330.7, type:'Honda'},
-  {name:'Z10-23',      hrs:330.7, type:'Ford'},
-  {name:'Honda 15-03', hrs:324.3, type:'Honda'},
-  {name:'Honda 15-04', hrs:298.2, type:'Honda'},
-  {name:'Honda 15-07', hrs:284.0, type:'Honda'},
-  {name:'Honda 15-08', hrs:283.4, type:'Honda'},
-  {name:'Z10-10',      hrs:267.8, type:'Ford'},
-  {name:'Z10-20',      hrs:252.1, type:'Ford'},
-  {name:'Honda 15-09', hrs:165.8, type:'Honda'},
-  {name:'Z10-22',      hrs:119.3, type:'Ford'},
-  {name:'Z10-21',      hrs:103.7, type:'Ford'},
-  {name:'Z10-18',      hrs:96.4,  type:'Ford'},
-  {name:'Z10-19',      hrs:84.8,  type:'Ford'},
-  {name:'Z10-17',      hrs:63.4,  type:'Ford'},
-  {name:'Z10-04',      hrs:6.5,   type:'Ford'},
-  {name:'Z10-05',      hrs:3.6,   type:'Ford'},
-  {name:'Z10-01',      hrs:1.8,   type:'Ford'},
-  {name:'Z10-06',      hrs:1.3,   type:'Ford'},
-  {name:'Z10-02',      hrs:1.3,   type:'Ford'},
-  {name:'Z10-03',      hrs:1.1,   type:'Ford'},
-  {name:'Z10-14',      hrs:0.2,   type:'Ford'},
-];
+function fmt(n, d=1){ return (n===null||n===undefined||Number.isNaN(n)) ? "—" : Number(n).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function money(n){ return (n===null||n===undefined) ? "—" : "$"+Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
-let mainChart;
+// ---- Tabs ----
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+  });
+});
 
-function buildMain(filter) {
-  const data = filter === 'all' ? ALL_DATA : ALL_DATA.filter(d => d.type === filter.charAt(0).toUpperCase() + filter.slice(1));
-  const colors = data.map(d => d.type === 'Honda' ? 'rgba(37,99,168,0.80)' : 'rgba(232,160,32,0.85)');
-  if (mainChart) mainChart.destroy();
-  mainChart = new Chart(document.getElementById('mainChart'), {
-    type: 'bar',
-    data: {
-      labels: data.map(d => d.name),
-      datasets: [{ label: 'Period Hours', data: data.map(d => d.hrs), backgroundColor: colors, borderRadius: 4, borderSkipped: false }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' hrs' } } },
-      scales: {
-        x: { ticks: { color: tc, font: { size: 11 }, maxRotation: 35 }, grid: { display: false }, border: { display: false } },
-        y: { ticks: { color: tc, font: { size: 11 }, callback: v => v + ' hrs' }, grid: { color: gc }, border: { display: false },
-             title: { display: true, text: 'Engine Hours', color: tc, font: { size: 11 } } }
-      }
-    }
+// ---- Generic sortable table ----
+function makeSortable(tableId, tbodyId, data, rowFn){
+  const table = document.getElementById(tableId);
+  let sortKey = null, asc = false;
+  function draw(rows){ document.getElementById(tbodyId).innerHTML = rows.map(rowFn).join(''); }
+  draw(data);
+  table.querySelectorAll('thead th').forEach(th=>{
+    th.addEventListener('click', ()=>{
+      const key = th.dataset.key;
+      if(!key) return;
+      if(sortKey===key){ asc = !asc; } else { sortKey = key; asc = false; }
+      table.querySelectorAll('thead th').forEach(h=>h.classList.remove('sorted','asc'));
+      th.classList.add('sorted'); if(asc) th.classList.add('asc');
+      const sorted = [...data].sort((a,b)=>{
+        let va=a[key], vb=b[key];
+        if(va===null||va===undefined) va = (typeof vb==='number') ? -Infinity : '';
+        if(vb===null||vb===undefined) vb = (typeof va==='number') ? -Infinity : '';
+        if(typeof va === 'string'){ va=va.toLowerCase(); vb=vb.toLowerCase(); }
+        if(va<vb) return asc?-1:1;
+        if(va>vb) return asc?1:-1;
+        return 0;
+      });
+      draw(sorted);
+    });
   });
 }
 
-function switchTab(filter) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-  buildMain(filter);
+// ---- Rank card helper ----
+function rankList(items, valueKey, subKey, unit, goodClass, decimals){
+  return items.map((r,i)=>`<li>
+    <span class="rname"><span class="rank-num">${i+1}</span>${r.__name}${r[subKey]?` <span class="rsub">(${r[subKey]})</span>`:''}</span>
+    <span class="rval ${goodClass}">${fmt(r[valueKey], decimals)}${unit}</span>
+  </li>`).join('');
 }
 
-buildMain('all');
+// ================= SC FLEET =================
+(function(){
+  const julGal = DATA.top5.sc_jul_gal.map(r=>({...r, __name:r.Driver.split(' - ')[0].split(' ').slice(0,2).join(' '), __sub:r.fills+' fills'}));
+  const ytdGal = DATA.top5.sc_ytd_gal.map(r=>({...r, __name:r.Driver.split(' - ')[0].split(' ').slice(0,2).join(' '), __sub:r.ytd_fills+' fills'}));
+  document.getElementById('rankSCGal').innerHTML = `
+    <div class="rank-card bad"><h3>Top 5 Most Gallons — July</h3><ul class="rank-list">${rankList(julGal,'gal','__sub',' gal','bad',0)}</ul></div>
+    <div class="rank-card bad"><h3>Top 5 Most Gallons — YTD</h3><ul class="rank-list">${rankList(ytdGal,'ytd_gal','__sub',' gal','bad',0)}</ul></div>
+  `;
+})();
 
-// Honda vs Ford comparison
-const hondaData = ALL_DATA.filter(d=>d.type==='Honda').map(d=>d.hrs);
-const fordData  = ALL_DATA.filter(d=>d.type==='Ford').map(d=>d.hrs);
-const hondaLabels = ALL_DATA.filter(d=>d.type==='Honda').map(d=>d.name.replace('Honda ',''));
-const fordLabels  = ALL_DATA.filter(d=>d.type==='Ford').map(d=>d.name);
-const maxLen = Math.max(hondaData.length, fordData.length);
-while(hondaData.length < maxLen) hondaData.push(null);
-while(fordData.length  < maxLen) fordData.push(null);
-const compareLabels = Array.from({length:maxLen},(_,i)=>i+1);
+makeSortable('tbl-sc','body-sc', DATA.sc_fleet, r=>{
+  const lowMpg = (r.avg_mpg!==null && r.avg_mpg<9);
+  const lowYtd = (r.ytd_mpg!==null && r.ytd_mpg<9);
+  const eqDisplay = r.eq ? r.eq : '<span class="tag bad">Unmatched</span>';
+  const assetDisplay = r.asset_type ? r.asset_type : (r.eq_source||'—');
+  const noteAttr = r.eq_note ? ` title="${r.eq_note.replace(/"/g,'&quot;')}"` : '';
+  const rentalTag = r.eq_source==='Rental (active)' ? ' <span class="tag warn">Rental</span>'
+    : (r.eq_source && r.eq_source.startsWith('Rental (ended')) ? ' <span class="tag bad">Rental ended</span>' : '';
+  return `<tr${noteAttr}>
+    <td>${r.Driver}</td>
+    <td class="num">${r.vehicle}</td>
+    <td>${eqDisplay}${rentalTag}</td>
+    <td>${assetDisplay}</td>
+    <td class="num">${fmt(r.gal)}</td>
+    <td class="num">${money(r.cost)}</td>
+    <td class="num ${lowYtd?'flag-low':''}">${r.ytd_mpg!==null ? fmt(r.ytd_mpg,2) : '—'}</td>
+    <td class="num ${lowMpg?'flag-low':''}">${r.avg_mpg!==null ? fmt(r.avg_mpg,2) : '—'}</td>
+    <td class="num">${r.fills}</td>
+  </tr>`;
+});
 
-new Chart(document.getElementById('compareChart'), {
+// ================= VISTA DIGITAL =================
+(function(){
+  const top = DATA.top5.digital_top5.map(r=>({...r, __name:r.reg_clean, __sub:r.primary_driver+' · '+r.category}));
+  document.getElementById('rankDigital').innerHTML = `
+    <div class="rank-card bad" style="grid-column: span 2;"><h3>Top 5 Highest Fuel Consumption</h3><ul class="rank-list">${rankList(top,'gal','__sub',' gal','bad',0)}</ul></div>
+  `;
+})();
+
+makeSortable('tbl-digital','body-digital', DATA.bsmart, r=>{
+  return `<tr>
+    <td>${r.reg_clean}</td>
+    <td><span class="tag neutral">${r.category}</span></td>
+    <td>${r.primary_driver}</td>
+    <td class="num">${fmt(r.gal)}</td>
+    <td class="num">${r.fills}</td>
+  </tr>`;
+});
+
+// ================= VISTA PAPER LOGS =================
+function matchTag(type){
+  if(type==='confirmed') return '<span class="tag ok">Confirmed</span>';
+  if(type==='likely') return '<span class="tag warn">Likely</span>';
+  if(type==='flag') return '<span class="tag bad">Check</span>';
+  return '';
+}
+makeSortable('tbl-paper','body-paper', DATA.paper, r=>{
+  const noteAttr = r.match_note ? ` title="${r.match_note.replace(/"/g,'&quot;')}"` : '';
+  const assetCell = r.matched_asset
+    ? `${matchTag(r.match_type)} ${r.matched_asset}`
+    : (r.match_type==='flag' ? `${matchTag('flag')} <span style="color:#9a9990">No match found</span>` : '<span style="color:#9a9990">—</span>');
+  return `<tr${noteAttr}>
+    <td>${r.eq}</td>
+    <td>${assetCell}</td>
+    <td>${r.foreman}</td>
+    <td>${r.operators || '—'}</td>
+    <td class="num">${fmt(r.gal)}</td>
+    <td class="num">${r.fills}</td>
+  </tr>`;
+});
+
+(function(){
+  const eff = DATA.top5.paper_efficient.map(r=>({...r, __name:r.eq, __sub:r.foreman}));
+  const ineff = DATA.top5.paper_inefficient.map(r=>({...r, __name:r.eq, __sub:r.foreman}));
+  document.getElementById('rankPaper').innerHTML = `
+    <div class="rank-card good"><h3>Top 5 Most Efficient (gal/hr)</h3><ul class="rank-list">${rankList(eff,'gal_per_hr','__sub',' gal/hr','good',2)}</ul></div>
+    <div class="rank-card bad"><h3>Top 5 Least Efficient (gal/hr)</h3><ul class="rank-list">${rankList(ineff,'gal_per_hr','__sub',' gal/hr','bad',2)}</ul></div>
+  `;
+})();
+
+// Fleet chart (hours vs gallons)
+const tc = 'rgba(0,0,0,0.38)';
+const gc = 'rgba(0,0,0,0.07)';
+const fleetUnits = DATA.fleet_chart.units;
+new Chart(document.getElementById('fleetChart'), {
   type: 'bar',
   data: {
-    labels: ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th'].slice(0,maxLen),
+    labels: fleetUnits.map(u=>u.label),
     datasets: [
-      { label: 'Honda UTV', data: hondaData, backgroundColor: 'rgba(37,99,168,0.80)', borderRadius: 3, borderSkipped: false },
-      { label: 'Ford Pickup', data: fordData, backgroundColor: 'rgba(232,160,32,0.80)', borderRadius: 3, borderSkipped: false },
+      { label:'Hours logged', data: fleetUnits.map(u=>u.hours_span), backgroundColor:'rgba(37,99,168,0.80)', borderRadius:3, borderSkipped:false, yAxisID:'yHours', order:2 },
+      { label:'Gallons dispensed', data: fleetUnits.map(u=>u.gal_total), backgroundColor:'rgba(232,160,32,0.90)', borderRadius:3, borderSkipped:false, yAxisID:'yGal', order:1 }
     ]
   },
   options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } },
-               tooltip: { callbacks: { label: ctx => (ctx.dataset.label==='Honda UTV'?hondaLabels:fordLabels)[ctx.dataIndex] + ': ' + (ctx.parsed.y||0).toFixed(1) + ' hrs' } } },
-    scales: {
-      x: { ticks: { color: tc, font: { size: 11 } }, grid: { display: false }, border: { display: false },
-           title: { display: true, text: 'Rank within fleet type', color: tc, font: { size: 11 } } },
-      y: { ticks: { color: tc, font: { size: 11 }, callback: v => v + ' hrs' }, grid: { color: gc }, border: { display: false } }
-    }
-  }
-});
-
-// Utilization stacked bar chart
-const utilVehicles = ['Z10-10','Z10-20','Z10-23','Z10-18','Z10-19','Z10-17'];
-const workingHrs   = [179.12, 197.08, 103.97, 77.82, 67.40, 43.57];
-const idleHrs      = [86.22,  52.82,  76.92, 17.89, 17.16, 19.62];
-
-new Chart(document.getElementById('utilChart'), {
-  type: 'bar',
-  data: {
-    labels: utilVehicles,
-    datasets: [
-      { label: 'Working hrs', data: workingHrs, backgroundColor: 'rgba(26,122,82,0.80)', borderRadius: 3, borderSkipped: false },
-      { label: 'Idle hrs',    data: idleHrs,    backgroundColor: 'rgba(232,160,32,0.80)', borderRadius: 3, borderSkipped: false },
-    ]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { position:'top', labels:{ font:{size:12}, boxWidth:12 } },
-               tooltip: { mode: 'index' } },
-    scales: {
-      x: { stacked: true, ticks:{color:tc,font:{size:12}}, grid:{display:false}, border:{display:false} },
-      y: { stacked: true, ticks:{color:tc,font:{size:11},callback:v=>v+' hrs'}, grid:{color:gc}, border:{display:false} }
-    }
-  }
-});
-
-// Idle % bar chart
-const idlePct = [32.5, 21.1, 42.5, 18.7, 20.3, 31.0];
-const idleColors = idlePct.map(v => v > 35 ? 'rgba(192,57,43,0.80)' : v > 25 ? 'rgba(232,160,32,0.80)' : 'rgba(26,122,82,0.70)');
-new Chart(document.getElementById('idlePctChart'), {
-  type: 'bar',
-  data: {
-    labels: utilVehicles,
-    datasets: [{ label: 'Idle %', data: idlePct, backgroundColor: idleColors, borderRadius: 4, borderSkipped: false }]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
+    responsive:true, maintainAspectRatio:false, interaction:{mode:'index'},
     plugins: { legend:{display:false},
-               tooltip:{ callbacks:{ label: ctx => ctx.parsed.y.toFixed(1)+'% idle' } } },
+      tooltip: { callbacks: { label: ctx => ctx.dataset.label==='Hours logged' ? `Hours: ${ctx.parsed.y.toFixed(1)} hrs` : `Gallons: ${ctx.parsed.y.toFixed(1)} gal` } } },
     scales: {
       x: { ticks:{color:tc,font:{size:12}}, grid:{display:false}, border:{display:false} },
-      y: { ticks:{color:tc,font:{size:11},callback:v=>v+'%'}, grid:{color:gc}, border:{display:false},
-           title:{display:true,text:'Idle %',color:tc,font:{size:11}},
-           max: 55 }
+      yHours: { type:'linear', position:'left', title:{display:true,text:'Hours logged',color:'rgba(37,99,168,0.8)',font:{size:11}}, ticks:{color:'rgba(37,99,168,0.7)',font:{size:11},callback:v=>v+' hrs'}, grid:{color:gc}, border:{display:false} },
+      yGal: { type:'linear', position:'right', title:{display:true,text:'Gallons dispensed',color:'rgba(200,130,10,0.9)',font:{size:11}}, ticks:{color:'rgba(200,130,10,0.85)',font:{size:11},callback:v=>v+' gal'}, grid:{drawOnChartArea:false}, border:{display:false} }
     }
   }
 });
 
+// Efficiency chart
+const effSorted = [...fleetUnits].sort((a,b)=>a.gal_per_hr-b.gal_per_hr);
+new Chart(document.getElementById('efficiencyChart'), {
+  type:'bar',
+  data: {
+    labels: effSorted.map(u=>u.label),
+    datasets: [{ label:'Gal/hr', data: effSorted.map(u=>u.gal_per_hr),
+      backgroundColor: effSorted.map(u=>u.gal_per_hr>=1.5 ? '#c0392b' : '#2563a8'),
+      borderRadius:4, borderSkipped:false }]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins: { legend:{display:false}, tooltip:{callbacks:{label:ctx=>ctx.parsed.y.toFixed(2)+' gal/hr'}} },
+    scales: {
+      x: { ticks:{color:tc,font:{size:12},autoSkip:false}, grid:{display:false}, border:{display:false} },
+      y: { min:0, max:1.8, ticks:{color:tc,font:{size:12},callback:v=>v.toFixed(2)}, grid:{color:gc}, border:{display:false}, title:{display:true,text:'gal/hr',color:tc,font:{size:11}} }
+    }
+  }
+});
+
+// ================= RECONCILIATION =================
+function statusTag(pct){
+  const a = Math.abs(pct);
+  if(a<10) return '<span class="tag ok">Matches</span>';
+  if(a<30) return '<span class="tag warn">Review</span>';
+  return '<span class="tag bad">Investigate</span>';
+}
+makeSortable('tbl-recon','body-recon', DATA.reconciliation, r=>{
+  return `<tr>
+    <td>${r.foreman}</td>
+    <td class="num">${fmt(r.digital)}</td>
+    <td class="num">${fmt(r.paper)}</td>
+    <td class="num">${statusTag(r.pct)} ${r.pct>0?'+':''}${fmt(r.pct)}%</td>
+  </tr>`;
+});
+
+(function(){
+  const maxVal = Math.max(...DATA.reconciliation.map(r=>Math.max(r.digital,r.paper)));
+  document.getElementById('reconChart').innerHTML = DATA.reconciliation.map(r=>{
+    const dPct=(r.digital/maxVal*100).toFixed(1), pPct=(r.paper/maxVal*100).toFixed(1);
+    return `<div style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;"><span style="font-weight:700;color:#1a1a18;">${r.foreman}</span><span style="color:#6b6b65;">${fmt(r.digital)} vs ${fmt(r.paper)} gal</span></div>
+      <div style="height:9px;background:#eceae0;border-radius:5px;overflow:hidden;"><div style="width:${dPct}%;height:100%;background:#2563a8;"></div></div>
+      <div style="height:9px;background:#eceae0;border-radius:5px;overflow:hidden;margin-top:3px;"><div style="width:${pPct}%;height:100%;background:#e8a020;"></div></div>
+    </div>`;
+  }).join('') + `<div class="legend" style="margin-top:6px;">
+    <span><span class="leg-dot" style="background:#2563a8;"></span>B.Smart digital</span>
+    <span><span class="leg-dot" style="background:#e8a020;"></span>Paper log</span>
+  </div>`;
+})();
+
+// ================= ENGINE HOURS =================
+makeSortable('tbl-hours','body-hours', DATA.engine_ref, r=>{
+  return `<tr><td>${r.eq}</td><td>${r.make}</td><td>${r.model}</td><td class="num">${r.hours}</td></tr>`;
+});
+
+// ================= FINDINGS =================
+(function(){
+  document.getElementById('findingsList').innerHTML = DATA.findings.map(f=>`
+    <div class="finding-card">
+      <div class="finding-header"><span class="badge badge-${f.badge}">${f.badge==='red'?'investigate':'review'}</span><span class="finding-title">${f.title}</span></div>
+      <div class="finding-body">${f.body}</div>
+    </div>
+  `).join('');
+})();
 </script>
 </body>
 </html>
